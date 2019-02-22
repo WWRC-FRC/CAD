@@ -59,21 +59,24 @@ $LowerArmVOffset = 7;												             //Height of the lower arm center o
 //Animation variables
 $CargoSensorAngle = 10;
 $LifterAngle  = 0;
-$IntakeAngle  = 0;
 $LifterHeight = 19;
 $PinPosition = 0;//Pin insertion position
 $RearLifterHeight = 160;
+//$IntakeAngle  = 77;
+//$LatchSupportAngle = 87;
+$IntakeAngle  = 0;
+$LatchSupportAngle = 87;
 
 ////////////////////////////////////////////////////////////////////
 //  Current working options...
 ////////////////////////////////////////////////////////////////////
 //IntakeV3();
-//RobotV4();
+RobotV4();
 //StartBoundsCheck();
 //translate([-11, 0, 0])
 //	rotate(90, [0, 0, 1])
 //		HeightTemplates();
-RearLifterV2();
+//RearLifterV2();
 
 //VisionTest();
 
@@ -612,9 +615,46 @@ module LowerPlate()
 				cube([10, 10, 1]);
 	}
 }
+$IntakeAngle  = 75;
+$LatchSupportAngle = 31 - 77;
+
+module LatchLockArm()
+{
+	difference()
+	{
+		cube([11.0, 3/16, 1]);
+		translate([10.05, 0, -0.5])
+		{
+			translate([-0.1, -0.1, -0.6])
+				rotate(-35, [0, 1, 0])
+					cube([1, 1, 1]);
+			rotate(20, [0, 1, 0])
+				rotate(90, [1, 0, 0])
+					hull()
+					{
+						cylinder(d = 0.28, h = 1, $fn = 20, center = true);
+						translate([0, 1, 0])
+							cylinder(d = 0.28, h = 1, $fn = 20, center = true);
+					}
+			translate([0.2, 0, 0.945])
+				rotate(90, [1, 0, 0])
+					hull()
+					{
+						cylinder(d = 0.28, h = 1, $fn = 20, center = true);
+						translate([0.1, 0, 0])
+							cylinder(d = 0.28, h = 1, $fn = 20, center = true);
+					}
+		}
+	}
+}
 
 module Intake3Side()
 {
+	//Latch catch
+	translate(LifterArmOffset() + [-0.5, 1.5, $LowerArmVOffset])
+		rotate(-$LatchSupportAngle, [0, 1, 0])
+			translate([-0.5, 0, -0.5])
+				LatchLockArm();
 	//Back support
 	translate([0, 0, $LowerArmVOffset - 0.5])
 		Tube($W = 1, $L = $ArmSpacing + 1, $Holes = [[0.5, 0], [$ArmSpacing + 0.5, 0]]);
@@ -625,10 +665,10 @@ module Intake3Side()
 		{
 			translate([0, 0, -0.5])
 				Tube($W = 1,$L = $ArmLength + 1, $Holes = [[0.5, 0], [$ArmLength + 0.5, 0], [$ArmLength - 0.5, 0]]);
-			//Arm pin locks
-			translate([0, 0.5, $ArmLength - 1])
-				rotate(90, [0, 1, 0])
-					ArmLatch();
+//			//Arm pin locks
+//			translate([0, 0.5, $ArmLength - 1])
+//				rotate(90, [0, 1, 0])
+//					ArmLatch();
 		}
 
 	//Lower support arm
@@ -639,10 +679,10 @@ module Intake3Side()
 			{
 				Tube($W = 1,$L = $ArmLength + 1, $Holes = [[0.5, 0], [$ArmLength + 0.5, 0], [$ArmLength - 0.5, 0]]);
 			}
-			//Arm pin locks
-			translate([0, 0.5, $ArmLength - 1])
-				rotate(90, [0, 1, 0])
-					ArmLatch();
+//			//Arm pin locks
+//			translate([0, 0.5, $ArmLength - 1])
+//				rotate(90, [0, 1, 0])
+//					ArmLatch();
 		}
 
 	//Front support
