@@ -61,11 +61,13 @@ $CargoSensorAngle = 10;
 $LifterAngle  = 0;
 $LifterHeight = 19;
 $PinPosition = 0;//Pin insertion position
-$RearLifterHeight = 160;
-//$IntakeAngle  = 77;
-//$LatchSupportAngle = 87;
+$RearLifterHeight = 10;
+$IntakeAngle  = 10;
+$LatchSupportAngle = 7;
+
 $IntakeAngle  = 0;
-$LatchSupportAngle = 87;
+$LatchSupportAngle = 31;
+
 
 ////////////////////////////////////////////////////////////////////
 //  Current working options...
@@ -615,8 +617,6 @@ module LowerPlate()
 				cube([10, 10, 1]);
 	}
 }
-$IntakeAngle  = 75;
-$LatchSupportAngle = 31 - 77;
 
 module LatchLockArm()
 {
