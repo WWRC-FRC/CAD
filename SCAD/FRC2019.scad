@@ -61,17 +61,15 @@ $CargoSensorAngle = 10;
 $LifterAngle  = 0;
 $LifterHeight = 19;
 $PinPosition = 0;//Pin insertion position
-$RearLifterHeight = 160;
-//$IntakeAngle  = 77;
-//$LatchSupportAngle = 87;
-$IntakeAngle  = 0;
-$LatchSupportAngle = 87;
+$RearLifterHeight = 16;
+$IntakeAngle  = 75;
+$LatchSupportAngle = 31 - ($IntakeAngle * 1.03);
 
 ////////////////////////////////////////////////////////////////////
 //  Current working options...
 ////////////////////////////////////////////////////////////////////
 //IntakeV3();
-RobotV4();
+//RobotV4();
 //StartBoundsCheck();
 //translate([-11, 0, 0])
 //	rotate(90, [0, 0, 1])
@@ -85,6 +83,7 @@ RobotV4();
 ////////////////////////////////////////////////////////////////////
 //ArmLatch();
 //UltrasonicHousingPrint();
+PrintCamerMountLogitec();
 
 ////////////////////////////////////////////////////////////////////
 //  Sub-assemblies
@@ -201,6 +200,58 @@ module UltrasonicSensorMountBackPlate()
     }
     translate([0, -0.78, 0.05])
       cube([2.1 + 0.2, 0.24, .1], center = true);
+}
+
+module PrintCamerMountLogitec()
+{
+  translate([0, 0, 26])
+    difference()
+    {
+      CamerMountLogitec();
+      translate([0, 0, 50])
+        cube([100, 100, 100], center = true);
+    }
+
+  translate([40, 0, -1.5])
+    difference()
+    {
+      CamerMountLogitec();
+      translate([0, 0, -50])
+        cube([100, 100, 100], center = true);
+    }
+
+}
+
+module CamerMountLogitec()
+{
+  difference()
+  {
+    union()
+    {
+      intersection()
+      {
+        union()
+        {
+          cube([52, 70, 10], center = true);
+          sphere(d = 52, $fn = 100);
+        }
+        scale([0.5, 1.0, 1.0])
+          cylinder(d = 70, h = 100, $fn = 10, center = true);
+      }
+      translate([0, 0, -24])
+        cube([30, 72, 4], center = true);
+    }
+    sphere(d = 49, $fn = 100);
+    cube([53, 73, 3], center = true);
+    translate([25, 0, 0])
+      cube([20, 73, 53], center = true);
+    translate([-25, 0, 0])
+      cube([20, 73, 53], center = true);
+    translate([0, 29.5, 0])
+      cylinder(d = 3, h = 100, $fn = 100, center = true);
+    translate([0, -29.5, 0])
+      cylinder(d = 3, h = 100, $fn = 100, center = true);
+  }
 }
 
 module UltrasonicSensorMountFront()
@@ -615,9 +666,6 @@ module LowerPlate()
 				cube([10, 10, 1]);
 	}
 }
-$IntakeAngle  = 75;
-$LatchSupportAngle = 31 - 77;
-
 module LatchLockArm()
 {
 	difference()
