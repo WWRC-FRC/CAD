@@ -56,6 +56,12 @@ $LifterSprocketDiameter = 1.5;
 $LifterWheelOffset = 0.5;
 $LowerArmVOffset = 7;												             //Height of the lower arm center off the ground.Designed to align with lifter wheels
 
+//Chain pusher parameters
+$ChainPusherInsertSize = 21.65;
+$ChainPusherInsertHeight = 40;
+$ChainPusherInsertShaft = 9.75;
+$ChainPusherHexSize = 16.5;
+
 //Animation variables
 $CargoSensorAngle = 10;
 $LifterAngle  = 0;
@@ -83,7 +89,8 @@ $LatchSupportAngle = 31 - ($IntakeAngle * 1.03);
 ////////////////////////////////////////////////////////////////////
 //ArmLatch();
 //UltrasonicHousingPrint();
-PrintCamerMountLogitec();
+//PrintCamerMountLogitec();
+ChainPusher();
 
 ////////////////////////////////////////////////////////////////////
 //  Sub-assemblies
@@ -184,6 +191,41 @@ module UltrasonicHousingPrint()
 	rotate(180, [1, 0, 0])
 	UltrasonicSensorMountBackPlate();
 	}
+}
+
+module ChainPusherInsert()
+{
+  translate([0, 0, $ChainPusherInsertHeight / 2])
+    difference()
+    {
+      cube([$ChainPusherInsertSize, $ChainPusherInsertSize, $ChainPusherInsertHeight], center = true);
+      cylinder(d = $ChainPusherInsertShaft, h = $ChainPusherInsertHeight + 20, center = true, $fn= 30);
+    }
+}
+
+module ChainPusherGuide()
+{
+  translate([0, 0, 2])
+    difference()
+    {
+      cube([29.4, 29.4, 4], center = true);
+      translate([0, 0, 1.01])
+        cube([25.4, 29.5, 2], center = true);
+      cylinder(d = $ChainPusherHexSize, h = 10, $fn = 6, center = true);
+    }
+}
+
+module ChainPusher()
+{
+  ChainPusherInsert();
+  translate([30, 0, 0])
+    ChainPusherGuide();
+  translate([0, 35, 0])
+  {
+      ChainPusherInsert();
+    translate([30, 0, 0])
+      ChainPusherGuide();
+  }
 }
 
 module UltrasonicSensorMountBackPlate()
