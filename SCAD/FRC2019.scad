@@ -90,7 +90,19 @@ $LatchSupportAngle = 31 - ($IntakeAngle * 1.03);
 //ArmLatch();
 //UltrasonicHousingPrint();
 //PrintCamerMountLogitec();
-ChainPusher();
+//ChainPusher();
+
+translate([0, -32, 0])
+{
+  ChainPusherGuide();
+  translate([32, 0, 0])
+    ChainPusherGuide();
+  translate([32 + 32, 0, 0])
+    ChainPusherGuide();
+  translate([32 + 32 + 32, 0, 0])
+    ChainPusherGuide();
+}
+TubeSupports();
 
 ////////////////////////////////////////////////////////////////////
 //  Sub-assemblies
@@ -180,6 +192,14 @@ module VisionTest()
 	Rocket();
 }
 
+module TubeSupports()
+{
+  for($x=[0:3])
+    for($y=[0:3])
+     translate([$x * 30, $y * 30, $ChainPusherInsertSize / 2])
+        cube([$ChainPusherInsertSize + 2, $ChainPusherInsertSize, $ChainPusherInsertSize], center = true);
+}
+
 module UltrasonicHousingPrint()
 {
 	scale(25.4)
@@ -188,8 +208,8 @@ module UltrasonicHousingPrint()
 		UltrasonicSensorMountFront();
 
 	translate([0, 1.3, -.58])
-	rotate(180, [1, 0, 0])
-	UltrasonicSensorMountBackPlate();
+    rotate(180, [1, 0, 0])
+      UltrasonicSensorMountBackPlate();
 	}
 }
 
@@ -205,13 +225,13 @@ module ChainPusherInsert()
 
 module ChainPusherGuide()
 {
-  translate([0, 0, 2])
+  translate([0, 0, 6.5])
     difference()
     {
-      cube([29.4, 29.4, 4], center = true);
-      translate([0, 0, 1.01])
-        cube([25.4, 29.5, 2], center = true);
-      cylinder(d = $ChainPusherHexSize, h = 10, $fn = 6, center = true);
+      cube([29.4, 29.4, 13], center = true);
+      translate([0, 0, 2.01])
+        cube([25.4, 29.5, 13], center = true);
+      cylinder(d = $ChainPusherHexSize, h = 20, $fn = 6, center = true);
     }
 }
 
