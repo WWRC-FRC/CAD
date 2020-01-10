@@ -15,7 +15,7 @@
 // Usage:
 //
 // use <sprockets.scad>
-// sprocket(size, teeth, bore, hub_diameter, hub_height, guideangle);
+// sprocket(size, teeth, bore, hub_diameter, hub_height);
 //
 //   size:          ANSI Roller Chain Standard Sizes, default 25, or motorcycle sizes,
 //                  or 1 for bike w/derailleur or 2 for bike w/o derailleur
@@ -23,7 +23,6 @@
 //   bore:          Bore diameter, inches (Chain sizes seem to favor inches), default 5/16
 //   hub_diameter:  Hub diameter, inches, default 0
 //   hub_height:    Hub height TOTAL, default 0.
-//   guideangle:    Guide angle on teeth point to help enter chain cleam
 //
 // You may also need to tweak some of the fudge factors, depending on your
 // printer, etc.  See the constants below.
@@ -38,14 +37,14 @@ sprocket(25, 9, 5/16, 0, 0);
 // Adjust these if it's too tight/loose on your printer,
 // These seem to be OK on my Replicator 1
 FUDGE_BORE=0;	 // mm to fudge the edges of the bore
-FUDGE_ROLLER=0.3; // mm to fudge the hole for the rollers
-FUDGE_TEETH=2.7;  // Additional rounding of the teeth (0 is theoretical,
+FUDGE_ROLLER=0; // mm to fudge the hole for the rollers
+FUDGE_TEETH=1;  // Additional rounding of the teeth (0 is theoretical,
                 // my rep 1 seems to need 1 on medium.)
 
 function inches2mm(inches) = inches * 25.4;
 function mm2inches(mm) = mm / 25.4;
 
-module sprocket(size=25, teeth=9, bore=5/16, hub_diameter=0, hub_height=0, guideangle = 10)
+module sprocket(size=25, teeth=9, bore=5/16, hub_diameter=0, hub_height=0)
 {
 	bore_radius_mm = inches2mm(bore)/2;
 	hub_radius_mm = inches2mm(hub_diameter)/2;
@@ -55,7 +54,7 @@ module sprocket(size=25, teeth=9, bore=5/16, hub_diameter=0, hub_height=0, guide
 	{
 		union()
 		{
-			sprocket_plate(size, teeth, guideangle);
+			sprocket_plate(size, teeth);
 			if (hub_diameter != 0 && hub_height != 0)
 			cylinder(h=hub_height_mm, r=hub_radius_mm);
 		}
@@ -69,7 +68,7 @@ module sprocket(size=25, teeth=9, bore=5/16, hub_diameter=0, hub_height=0, guide
 	}
 }
 
-module sprocket_plate(size, teeth, guideangle)
+module sprocket_plate(size, teeth)
 {
 	angle = 360/teeth;
 	pitch=inches2mm(get_pitch(size));
@@ -85,13 +84,10 @@ module sprocket_plate(size, teeth, guideangle)
 	echo("Thickness=", mm2inches(thickness));
 	echo("Thickness mm=", thickness);
 
-	echo("Outside radius=", mm2inches(outside_radius));
-	echo("Outside radius mm=", outside_radius);
-	echo("Pitch radius=", mm2inches(pitch_radius));
-	echo("Pitch radius mm=", pitch_radius);
-	echo("Tooth angle =", angle);
-	PitchCheck = 2*pitch_radius * cos((180 - angle) / 2) /25.4;
-	echo("Pitch check =", PitchCheck);
+	echo("Outside diameter=", mm2inches(outside_radius * 2));
+	echo("Outside diameter mm=", outside_radius * 2);
+	echo("Pitch Diameter=", mm2inches(pitch_radius * 2));
+	echo("Pitch Diameter mm=", pitch_radius * 2);
 
 	middle_radius = sqrt(pow(pitch_radius,2) - pow(pitch/2,2));
 
@@ -121,27 +117,14 @@ module sprocket_plate(size, teeth, guideangle)
 					{
 						// Rotate current sprocket by angle
 						rotate([0,0,angle*sprocket])
-						difference()
+						intersection()
 						{
-							intersection()
-							{
-								translate([-fudge_teeth_x,pitch_radius-fudge_teeth_y,0])
-								cylinder(r=pitch-roller-FUDGE_ROLLER-FUDGE_TEETH,h=thickness);
+							translate([-fudge_teeth_x,pitch_radius-fudge_teeth_y,0])
+							cylinder(r=pitch-roller-FUDGE_ROLLER-FUDGE_TEETH,h=thickness);
 	
-								rotate([0,0,angle])
-								translate([fudge_teeth_x,pitch_radius-fudge_teeth_y,0])
-								cylinder(r=pitch-roller-FUDGE_ROLLER-FUDGE_TEETH,h=thickness);					
-							}
-							//Chain enter guides
-							rotate([0, 0, angle / 2])
-							translate([1-fudge_teeth_x,pitch_radius + 0.15,-2])
-							rotate([guideangle, 0, 0])
-							cube([10, 10, 4], center = true);
-							//
-							rotate([0, 0, angle / 2])
-							translate([1-fudge_teeth_x,pitch_radius+ 0.15,2 + thickness])
-							rotate([-guideangle, 0, 0])
-							cube([10, 10, 4], center = true);
+							rotate([0,0,angle])
+							translate([fudge_teeth_x,pitch_radius-fudge_teeth_y,0])
+							cylinder(r=pitch-roller-FUDGE_ROLLER-FUDGE_TEETH,h=thickness);					
 						}
 					}
 

@@ -1,6 +1,6 @@
 use <sprockets.scad>
+use <RobotPrimitives.scad>
 
-$HexToRScale        = 1.23607;
 $CargoDiameter      = 13;
 $BallClearance      = 2;
 $HatchOuterDiameter = 19;
@@ -98,7 +98,7 @@ $LatchSupportAngle = 31 - ($IntakeAngle * 1.03);
 //  Current working options...
 ////////////////////////////////////////////////////////////////////
 //IntakeV3();
-//RobotV4();
+RobotV4();
 //StartBoundsCheck();
 //translate([-11, 0, 0])
 //	rotate(90, [0, 0, 1])
@@ -124,7 +124,7 @@ $LatchSupportAngle = 31 - ($IntakeAngle * 1.03);
 //HabDriveWheelSupport();
 //HabDriveWheel();
 //PrintHabMechParts();
-LightRingFrame();
+//LightRingFrame();
 //HabCrawlerMotorCoupler();
 //HabCrawlerMotorSupport();
 //OpticalLimitSwitchHolder();
@@ -201,110 +201,9 @@ LightRingFrame();
 //GantryArmSet();
 //Robot1();
 
-//Triangle functions
-//Return 3rd side for side_angle_side triangle
-function Triangle_SAS_S() = sqrt((pow($L1, 2)) + (pow($L2, 2)) - (2 * $L1 * $L2 * cos($A)));
-//Return included angle given 3 sides
-function Triangle_SSS_A() = acos((pow($A1 , 2) + pow($A2, 2) - pow($O, 2)) / (2 * $A1 * $A2));
-
 ////////////////////////////////////////////////////////////////////
 //  Test
 ////////////////////////////////////////////////////////////////////
-
-module LightRingFrame()
-{
-  $fn = 40;
-  difference()
-  {
-    cylinder(d = 2.55, h = 0.26);
-    translate([0, 0, 0.08])
-    {
-      difference()
-      {
-        cylinder(d = 2.42, h = 0.26);
-        cylinder(d = 1.65, h = 0.26);
-      }
-      cylinder(d = 1.5, h = 0.26);
-    }
-    cube([0.51, 0.77, 1], center = true);
-    translate([2.035 / 2, 0, 0])
-      cube([.3, .3, 1], center = true);
-  }
-}
-
-module JeVoisMount()
-{
-  difference()
-  {
-    //Main base
-    translate([0, 0, 3.5])
-      cube([70, 70, 13], center = true);
-    //Camera outline/mount holes
-    translate([-14, 0, 2])
-      JeVoisBottom();
-    //Mount screw countersinks
-    translate([-28.75, 12.5, 7])
-      JeVoisHoles($D = 6, $L = 2);
-    //Cable exit
-    translate([13, 6, 7])
-      cube([22, 20, 10], center = true);
-    translate([29, 6, 7])
-      cube([14, 10, 10], center = true);
-    //Frame mount holes
-    translate([-15, 25])
-      cylinder(d = 3, h = 30, center = true, $fn = 20);
-    translate([-15, -25])
-      cylinder(d = 3, h = 30, center = true, $fn = 20);
-    //Remove excess
-    translate([30, -55, 0])
-      rotate(30, [0, 0, 1])
-        cube([80, 80, 80], center = true);
-    translate([30, 61, 0])
-      rotate(-20, [0, 0, 1])
-        cube([80, 80, 80], center = true);
-  }
-}
-
-module JeVoisHoles($D = 3, $L = 20)
-{
-  $fn = 20;
-  translate([0, 0, -10])
-    cylinder(d = $D, h = $L);
-  translate([0, -25, -10])
-    cylinder(d = $D, h = $L);
-  translate([29.5, 0, -10])
-    cylinder(d = $D, h = $L);
-  translate([29.5, -25, -10])
-    cylinder(d = $D, h = $L);
-}
-
-module JeVoisBottom()
-{
-  $fn = 20;
-  translate([-29.5/2, 25/2, 0])
-  {
-  //  color([0.2, 0.4, 0.9, 0.5])
-  //    rotate(90, [1, 0, 0])
-  //      translate([-36, -2.0, -37.6])
-  //        import("JeVoisA33-fanless-case-bottom-0.1mm.stl", convexity=3);
-    //Mount holes
-    JeVoisHoles($D = 3, $L = 20);
-    //Body cutout
-    hull()
-    {
-      translate([0, 0, 0])
-        cylinder(d = 7, h = 8.5);
-      translate([0, -25, 0])
-        cylinder(d = 7, h = 8.5);
-      translate([29.5, 0, 0])
-        cylinder(d = 7, h = 8.5);
-      translate([29.5, -25, 0])
-        cylinder(d = 7, h = 8.5);
-    }
-    translate([-4, -12.5, 4.25])
-      cube([5, 18, 8.5], center = true);
-  }
-}
 
 module VisionTest()
 {
@@ -351,174 +250,6 @@ module TubeSupports1x1()
     for($y=[0:3])
      translate([$x * 30, $y * 30, $ChainPusherInsertSize / 2])
         cube([$ChainPusherInsertSize + 2, $ChainPusherInsertSize, $ChainPusherInsertSize], center = true);
-}
-
-module UltrasonicHousingPrint()
-{
-	scale(25.4)
-	{
-	rotate(180, [0, 1, 0])
-		UltrasonicSensorMountFront();
-
-	translate([0, 1.3, -.58])
-    rotate(180, [1, 0, 0])
-      UltrasonicSensorMountBackPlate();
-	}
-}
-
-module ChainPusherInsert()
-{
-  translate([0, 0, $ChainPusherInsertHeight / 2])
-    difference()
-    {
-      cube([$ChainPusherInsertSize, $ChainPusherInsertSize, $ChainPusherInsertHeight], center = true);
-      cylinder(d = $ChainPusherInsertShaft, h = $ChainPusherInsertHeight + 20, center = true, $fn= 30);
-    }
-}
-
-module ChainPusherGuide()
-{
-  translate([0, 0, 6.5])
-    difference()
-    {
-      cube([29.4, 29.4, 13], center = true);
-      translate([0, 0, 2.01])
-        cube([25.4, 29.5, 13], center = true);
-      cylinder(d = $ChainPusherHexSize, h = 20, $fn = 6, center = true);
-    }
-}
-
-module ChainPusher()
-{
-  ChainPusherInsert();
-  translate([30, 0, 0])
-    ChainPusherGuide();
-  translate([0, 35, 0])
-  {
-      ChainPusherInsert();
-    translate([30, 0, 0])
-      ChainPusherGuide();
-  }
-}
-
-module UltrasonicSensorMountBackPlate()
-{
-  translate([0, -0.05, 0])
-    difference()
-    {
-      translate([0, 0.02, 0])
-      cube([2.1 + 0.2, 1.16 + 0.1, .2], center = true);
-      translate([0, -0.05, -0.1])
-        cube([2.1 + 0.01, 1.2 + 0.03, .2], center = true);
-      translate([0, -0.27, 0])
-        cube([0.6, .25, .5], center = true);
-    }
-    translate([0, -0.78, 0.05])
-      cube([2.1 + 0.2, 0.24, .1], center = true);
-}
-
-module PrintCamerMountLogitec()
-{
-  translate([0, 0, 26])
-    difference()
-    {
-      CamerMountLogitec();
-      translate([0, 0, 50])
-        cube([100, 100, 100], center = true);
-    }
-
-  translate([40, 0, -1.5])
-    difference()
-    {
-      CamerMountLogitec();
-      translate([0, 0, -50])
-        cube([100, 100, 100], center = true);
-    }
-
-}
-
-module CamerMountLogitec()
-{
-  difference()
-  {
-    union()
-    {
-      intersection()
-      {
-        union()
-        {
-          cube([52, 70, 10], center = true);
-          sphere(d = 52, $fn = 100);
-        }
-        scale([0.5, 1.0, 1.0])
-          cylinder(d = 70, h = 100, $fn = 10, center = true);
-      }
-      translate([0, 0, -24])
-        cube([30, 72, 4], center = true);
-    }
-    sphere(d = 49, $fn = 100);
-    cube([53, 73, 3], center = true);
-    translate([25, 0, 0])
-      cube([20, 73, 53], center = true);
-    translate([-25, 0, 0])
-      cube([20, 73, 53], center = true);
-    translate([0, 29.5, 0])
-      cylinder(d = 3, h = 100, $fn = 100, center = true);
-    translate([0, -29.5, 0])
-      cylinder(d = 3, h = 100, $fn = 100, center = true);
-  }
-}
-
-module UltrasonicSensorMountFront()
-{
-  difference()
-  {
-    //Main block
-    translate([0, -0.1, (.68 / 2)])
-      cube([2.1, 1.2, .68], center = true);
-    //Cut out the sensor
-    translate([0, 0, 0.07])
-      UltrasonicSensor();
-  }
-  difference()
-  {
-    //Mounting base
-    translate([0, -0.8, (.68 / 2)])
-      cube([4, .2, .68], center = true);
-    //Mounting holes
-    translate([1.5, -.5, (.68 / 2)])
-      rotate(90, [1, 0, 0])
-        cylinder(d = 1/4, h = 1, $fn = 40, center = true);
-    translate([-1.5, -.5, (.68 / 2)])
-      rotate(90, [1, 0, 0])
-        cylinder(d = 1/4, h = 1, $fn = 40, center = true);
-  }
-}
-
-module UltrasonicSensor()
-{
-  //PCB
-  cube([1.95, .88, 0.15], center = true);
-  //Transducer 1
-  translate([1.02 / 2, 0, 0.145 / 2])
-  {
-    cylinder (d = .63 + 0.017, h = .49, $fn = 50);
-    //Openings
-    cylinder (d = 0.56, h = 1, $fn = 50);
-  }
-  //Transducer 2
-  translate([-1.02 / 2, 0, 0.145 / 2])
-  {
-    cylinder (d = .63 + 0.017, h = .49, $fn = 50);
-    //Openings
-    cylinder (d = 0.56, h = 1, $fn = 50);
-  }
-  //Cyrstal
-  translate([0, (.88 - .255) / 2, (0.15 / 2) + (0.15 / 2)])
-    cube([0.55, .255, .15], center = true);
-  //Connector
-  translate([0, -(.88 - .255) / 2, (0.15 / 2) + (0.15 / 2)])
-    cube([0.55, .255, .15], center = true);
 }
 
 module RearLifterSideV2()
@@ -742,96 +473,6 @@ module HabDriverMounted()
   HabDriverAssembly();
 }
 
-module HabCrawlerMotorCoupler()
-{
-  difference()
-  {
-    difference()
-    {
-      union()
-      {
-        difference()
-        {
-          translate([0, 0, -0.22])
-            cylinder(d = 1.3, h = 0.8, $fn = 6);
-          translate([0, .25, -0.42])
-            cube([.22, .13, 1], center = true);
-         }
-      }
-      difference()
-      {
-        cylinder(d = 0.25, h = 5, $fn = 20, center = true);
-        translate([0, .35, 0])
-          cube([.5, .5, 5], center = true);
-      }
-    }
-    translate([0, 0, .18 - .25])
-      rotate(-90, [1, 0, 0])
-        cylinder(d = 4/25.4, h = 3, $fn = 20);
-    translate([0, 0, .58 - 0.5])
-      HexShaft($D = $HexShaftBore, $L = 1);
-  }
-}
-
-module NeverestSprocket()
-{
-  $fn = 40;
-  $GuideInnerDiameter = (($SprocketTeethCount * 0.25) / 3.141);
-  $GuideOuterDiameter = $GuideInnerDiameter + ((3/8));
-  $SprocketTeethCount = 16;
-  difference()
-  {
-    difference()
-    {
-      union()
-      {
-        translate([0, 0, (0.25 / 2)])
-          scale(1/25.4)
-          sprocket($ChainSize, $SprocketTeethCount, 0, 0, 0, $ChainGuideAngle);
-        difference()
-        {
-          translate([0, 0, -0.22])
-            cylinder(d = $GuideInnerDiameter - (7 / 25.4), h = 0.8, $fn = $SprocketTeethCount * 2);
-          translate([0, .25, 0])
-            cube([.22, .13, 5], center = true);
-         }
-      }
-      difference()
-      {
-        cylinder(d = 0.25, h = 5, $fn = 20, center = true);
-        translate([0, .35, 0])
-          cube([.5, .5, 5], center = true);
-      }
-    }
-    translate([0, 0, .18 - .27])
-      rotate(-90, [1, 0, 0])
-        cylinder(d = 4/25.4, h = 3, $fn = 20);
-    translate([0, 0, .18 + .27])
-      rotate(-90, [1, 0, 0])
-        cylinder(d = 4/25.4, h = 3, $fn = 20);
-  }
-}
-
-module HexSprocket()
-{
-  $GuideInnerDiameter = (($SprocketTeethCount * 0.25) / 3.141);
-  $GuideOuterDiameter = $GuideInnerDiameter + ((3/8));
-  {
-    difference()
-    {
-      union()
-      {
-        translate([0, 0, (0.25 / 2)])
-          scale(1/25.4)
-          sprocket($ChainSize, $SprocketTeethCount, 0, 0, 0, $ChainGuideAngle);
-        cylinder(d = $GuideInnerDiameter - (7 / 25.4), h = ((0.11 + 0.25)), $fn = $SprocketTeethCount * 2);
-      }
-      HexShaft($D = $HexBore, $L = 5, $Center = true);
-    }
-  }
-}
-
-
 module RearLifterV3()
 {
 	//Sides
@@ -860,34 +501,6 @@ module RearLifterV3()
   translate([0, 0, -$RearLifterHeight + 1])
   rotate(90, [1, 0, 0])
     HabDriverMounted();
-}
-
-
-module VBearing($ID = 3/8, $OD = 1.2, $T = 3/8)
-{
-	difference()
-	{
-		union()
-		{
-			color("SILVER")
-			{
-				translate([0, 0, 0 * ($T / 4)])
-					cylinder(d1 = $OD - .3, d2 = $OD, h = $T / 4, $fn = 50);
-				translate([0, 0, 1 * ($T / 4)])
-					cylinder(d2 = $OD - .3, d1 = $OD, h = $T / 4, $fn = 50);
-				translate([0, 0, 2 * ($T / 4)])
-					cylinder(d1 = $OD - .3, d2 = $OD, h = $T / 4, $fn = 50);
-				translate([0, 0, 3 * ($T / 4)])
-					cylinder(d2 = $OD - .3, d1 = $OD, h = $T / 4, $fn = 50);
-			}
-			color("BLACK")
-				translate([0, 0, -0.01])
-					cylinder(d = $ID + 0.2, h = $T + 0.02, $fn = 50);
-		}
-		translate([0, 0, -0.02])
-			cylinder(d = $ID, h = $T + 0.04, $fn = 50);
-	
-	}
 }
 
 module BumperChunk()
@@ -1091,7 +704,8 @@ module IntakeV3()
 	//Intake wheels and grabber
 	translate(LifterArmOffset() + [0, 0, $IntakeWheelOffset])
 	{
-		IntakeWheels($OpeningCenters, $IntakeWheelDiameter);
+		//IntakeWheels($OpeningCenters, $IntakeWheelDiameter);
+		IntakeWheels();
 		translate([0, 0, ($IntakeWheelDiameter / 2) + $UpperWheelClearance])
 			HatchGrabber();
 	}
@@ -1294,63 +908,13 @@ module IntakeV3SupportBrackets()
 			
 }
 
-module FlatLBracket($L = 2.5, $W = 0.5)
-{
-	color($BracketColor)
-	{
-		cube([3/16, $W, $L]);
-		cube([3/16, $L, $W]);
-	}
-}
-
-module FlatPlate($L = 2.5, $W = 0.5)
-{
-	color($BracketColor)
-	{
-		cube([3/16, $W, $L]);
-	}
-}
-
-module LBracket($L = 2.5, $W = 0.5)
-{
-	translate([-3/16, 0, 0])
-		color($BracketColor)
-		{
-			cube([3/16, $W, $L]);
-			translate([3/16, 0, 0])
-				rotate(-90, [0, 1, 0])
-					cube([3/16, $W, $L]);
-		}
-}
-
-module CornerBracket($L = 2.5, $W = 0.5)
-{
-	translate([-3/16, 0, 0])
-		color($BracketColor)
-		{
-			cube([3/16, $W, $L]);
-			translate([3/16, 0, 0])
-				rotate(-90, [0, 1, 0])
-					cube([3/16, $W, $L]);
-			translate([-$L, 0, 0])
-			difference()
-			{
-				translate([3/16, 0, 3/16])
-					cube([$L - (3/16), 3/16, $L - (3/16)]);
-				translate([0, -0.02, 0])
-					rotate(-45, [0, 1, 0])
-						cube([$L * 1.5, 4/16, $L * 1.5]);
-
-			}
-		}
-}
 
 module HatchHook()
 { 
 	color([.8, .8, .9])
 	translate([-2 - (1/8) - (1/4) - (3/16), 0, 1])
 	{
-		rotate(-$HookAngle, [0, 1, 0])
+//		rotate(-$HookAngle, [0, 1, 0])
 		{
 			cube([1/8, 1/2, 1.58]);
 			translate([0, 0, 1.5])
@@ -1378,11 +942,6 @@ module HatchGrabber()
 			cylinder(d = 2, h = 4, $fn = 30);
 	//Hatch Hook
 	HatchHook();
-}
-
-module HexShaft($D = 0.5, $L = 5, $Center = false)
-{
-		cylinder(d = $D * $HexToRScale, h = $L, $fn = 6, center = $Center);
 }
 
 module IntakeWheels()
@@ -1418,45 +977,6 @@ module IntakeWheels()
 				cylinder(d = $IntakeWheelDiameter, h = 1, $fn = 40, center = true);
 		}
 	}
-}
-
-module WireBox()
-{
-	$OutlineSize = 0.05;
-	difference()
-	{
-		cube([$W, $T, $L], center = true);
-		cube([$W - $OutlineSize, $T - $OutlineSize, $L + 0.1], center = true);
-		cube([$W + 0.1,          $T - $OutlineSize, $L - $OutlineSize], center = true);
-		cube([$W - $OutlineSize, $T + 0.1         , $L - $OutlineSize], center = true);
-	}
-}
-
-module Tube($W = 2, $T = 1, $HoleDiameter = 1/4, $Center = 0)
-{
-	echo ($W,$T, $L, $Holes);
-
-	translate([0, 0, -$Center * ($L / 2)])
-	{
-		color("BLACK")
-			translate([0, 0, $L / 2])
-				WireBox($W = $W + 0.01, $T = $T + 0.01, $L = $L + 0.01);
-		
-		color([0.7, 0.7, 0.7])
-			difference()
-			{
-				translate([-$W/2, -$T/2, 0])
-					cube([$W, $T, $L]);
-				translate([0.1-$W/2, 0.1-$T/2, -0.05])
-					cube([$W - 0.2, $T - 0.2, $L + 0.1]);
-				for($HoleCoord=$Holes)
-				{
-					translate([$HoleCoord[1], 0, $HoleCoord[0]])
-						rotate(90, [1, 0, 0])
-	#						cylinder(d = $HoleDiameter, h = $T + 2.1, $fn = 20, center = true);
-				}
-			}
-		}
 }
 
 module GrappleArm()
@@ -1711,59 +1231,15 @@ module LifterPlate()
 	}
 }
 
-
-module WheelSet()
-{
-	color("white")
-	rotate(90, [0, 1, 0])
-	{
-		translate([0, -11, 0])
-			cylinder(d = $DriveWheelDiameter, h = 1, $fn = 40, center = true);
-		cylinder(d = $DriveWheelDiameter, h = 1, $fn = 40, center = true);
-		translate([0, 11, 0])
-			cylinder(d = $DriveWheelDiameter, h = 1, $fn = 40, center = true);
-	}
-}
-
-module RobotBaseSimple()
-{
-    translate([0, 0, $DriveWheelDiameter / 2])
-	difference()
-	{
-		union()
-		{
-			color([0.7, 0.2, 0.6, 0.5])
-			difference()
-			{
-				cube($DriveFrameSize, center = true);
-				cube($DriveFrameSizeInner, center = true);
-			}
-            translate([0, 0, 2])
- 			color([0.3, 0.1, 0.5, 0.5])
-            difference()
-            {
-				cube($BumperSize, center = true);
-				cube($BumperSize - [2 * $BumperDepth, 2 * $BumperDepth, -1], center = true);
-            }
-			translate([13, 0, 0])
-				WheelSet();
-			translate([-13, 0, 0])
-				WheelSet();
-		}
-		translate([0, 10, 0])
-			cube([$FrontGap, 20, 30], center = true);
-	}
-}
-
-
 module Level3LiftV1()
 {
+  /*
 	//Set 1
 	$RearLeverLength = 18;
 	$FrontLeverLength = 19.5;
 	$LowerLeverSpacing = 9;
 	$PlateOffset = 5;
-
+*/
 	//Set 2
 	$RearLeverLength = 21.5;
 	$FrontLeverLength = 22;
@@ -2358,90 +1834,5 @@ module EmptyCapture()
   rotate($Rotation, [0, 1, 0])
 		Gripper();
   WristFixture();
-}
-
-module OpticalSensor()
-{
-  union()
-  {
-    //PCB
-    cube([34, 2, 16]);
-     //Sensor
-    translate([0, 2, 2.5])
-      cube([7, 8, 14]);//Z really 11 but extended to make opening on mount
-    //LED stems
-    translate([27, 0, 2.5])
-      rotate(90, [1, 0, 0])
-        cylinder(d = 2.5, h = 10, $fn = 50);
-    translate([27, 0, 13.5])
-      rotate(90, [1, 0, 0])
-        cylinder(d = 2.5, h = 10, $fn = 50);
-    //Pot
-    translate([14, -6, 8])
-      cube([8, 9, 8]);
-    translate([18, -6, 12])
-      rotate(90, [1, 0, 0])
-        cylinder(d = 4, h = 10, $fn = 50);
-    //Connector
-    translate([30, -3, 2])
-      cube([4, 6, 15]);//Z really 12 but extended to make opening on mount
-    translate([30, -6, 2])
-      cube([10, 4, 15]);//Z really 12 but extended to make opening on mount
-    //"Stuff"
-    translate([0, -2.5, 0])
-      cube([34, 2.5, 16]);
-  //Mounting hole
-  translate([25, 15, 8])
-    rotate(90, [1, 0, 0])
-      cylinder(d = 4, h = 30, $fn = 50);
-  //Mounting hole captive opening
-  translate([25, 10, 8])
-    rotate(90, [1, 0, 0])
-      cylinder(d = 7, h = 4, $fn = 50);
-  }
-}
-
-module OpticalLimitSwitchHolder()
-{
-  difference()
-  {
-    union()
-    {
-      //Base
-      difference()
-      {
-        union()
-        {
-          translate([0, -15, 0])
-            cube([15, 35, 3]);
-          translate([-15, 0, 0])
-            cube([70, 20, 3]);
-        }
-        translate([47, 10, 0])
-          cylinder(d = 5, h = 5, $fn = 50);
-        translate([-7, 10, 0])
-          cylinder(d = 5, h = 5, $fn = 50);
-        translate([7, -7, 0])
-          cylinder(d = 5, h = 5, $fn = 50);
-      }
-      //Main holder
-      cube([38, 20, 18]);
-    }
-    translate([2, 10, 2])
-      OpticalSensor();
-    //Adjust connector opening
-    translate([32, -0.1, 3])
-      cube([10, 8, 20]);
-  }
-  //Front facing mounting plate
-  translate([20, 17, 18])
-  difference()
-  {
-    cube([15, 3, 15]);
-    translate([7.5, 0, 7.5])
-      rotate(-90, [1, 0, 0])
-        cylinder(d = 4, h = 5, $fn = 50);
-  }
-
 }
 
