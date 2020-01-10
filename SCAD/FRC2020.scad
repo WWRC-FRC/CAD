@@ -1,7 +1,17 @@
 use <RobotPrimitives.scad>
+use <MCAD/involute_gears.scad>
+use <MCAD/servos.scad>
 
 /* [Action] */
-$Action = 5; //[1:Trajectory sim, 2:Launcher V1, 3:Launcher V2, 4:Full bot V1, 5: Ball intake]
+$Action = 6; //[1:Trajectory sim, 2:Launcher V1, 3:Launcher V2, 4:Full bot V1, 5: Ball intake, 6:ControlWheelManipulator]
+
+/* [Field elements] */
+$ShowControlPanel = true;//Show control panel wheel
+
+
+/* [Bounding boxes] */
+$ShowStartBound = false;//Show robot starting constraints
+$ShowTrenchBound = false;//Show bounds for trench run
 
 /* [Trajectory sim] */
 //Initial velocity exiting parallel to shooter (m/s)
@@ -28,6 +38,13 @@ $ShooterGuideOpening = 8;
 $LaunchCompression = 1;//
 $ShooterV2GuideOpening = 8;//Width of the guide channel
 
+/* [Intake options] */
+$BallIntakeStyle = "BallIntakeV1"; //[BallIntakeV1:"Front roller, side transport"]
+$FRSTHeight = 12;//FRST intake channel height
+
+/* [Control wheel options] */
+$ControlWheelAngle = 0;
+
 /* [Hidden] */
 $va = -9.8;//Vertcal acceleration (9.8m/s^2)
 $ha = 0;//Zero acceleration horizontally
@@ -37,11 +54,44 @@ $mtoinch = 1/$inchtom;
 $mtofeet = $mtoinch / 12;
 $Explode = 1.0;
 
-$ShooterV2FeederSpacing = $BallDiameter + $FlyWheelDiameter - $LaunchCompression;//Spacing between drive wheel set centers
+$ControlWheelOffset = [0, -1.5, -2];
 
+$ShooterV2FeederSpacing = $BallDiameter + $FlyWheelDiameter - $LaunchCompression;//Spacing between drive wheel set centers
 $ShooterFlywheelColor = [0.7, 0.1, 0.2];
 
+$MaxRobotBounds = [30, 30, 45];
+$TrenchRunBounds = [30, 30, 27];
+
+Oak = [0.65, 0.5, 0.4];
+Pine = [0.85, 0.7, 0.45];
+Birch = [0.9, 0.8, 0.6];
+FiberBoard = [0.7, 0.67, 0.6];
+BlackPaint = [0.2, 0.2, 0.2];
+Iron = [0.36, 0.33, 0.33];
+Steel = [0.65, 0.67, 0.72];
+Stainless = [0.45, 0.43, 0.5];
+Aluminum = [0.77, 0.77, 0.8];
+Brass = [0.88, 0.78, 0.5];
+Transparent = [1, 1, 1, 0.2];
+
+
 DoAction();
+
+if ($ShowStartBound)//Show robot starting constraints
+{
+  ShowBounds($Bounds = $MaxRobotBounds);
+}
+
+if ($ShowTrenchBound)//Show bounds for trench run
+{
+  ShowBounds($Bounds = $TrenchRunBounds);
+}
+
+if ($ShowControlPanel)
+{
+  translate([0, 23, 0])
+    ControlPanel();
+}  
 
 module DoAction()
 {
@@ -58,6 +108,19 @@ module DoAction()
     FullBotV1();
   else if ($Action == 5)
     BallIntake();
+  else if ($Action == 6)
+    ControlWheelManipulator();
+}
+
+module ControlPanel()
+{
+  ControlColor = [[0, 1, 1], [0, 1, 0], [1, 0, 0], [1, 1, 0]];
+  translate([0, 0, 30.25])
+    for (i = [0:7])
+      rotate((-45 * i), [0, 0, 1])
+        color(ControlColor[i % 4])
+          linear_extrude(height  = 2)
+            slice(32 / 2, 45);
 }
 
 module FullBotV1()
@@ -71,18 +134,152 @@ module FullBotV1()
   translate([-7.5, -8, 22])
     rotate(180, [0, 0, 1])
       ShooterV2Model();
-  translate([0, 10, 3.5])
-    Ball();
-  translate([4, 6, 3])
-    BallIntake();
+  Intake();
+  translate([1.5, 5, 25])
+    rotate(90, [0, 0, 1])
+      ControlWheelManipulator();
 }
 
-module BallIntake()
+module Intake()
 {
+  if ($BallIntakeStyle == "BallIntakeV1")
+  {
+    translate([4, 6, 3])
+      BallIntakeV1();
+    translate([0, 10, 3.5])
+      Ball();
+  }
+}
+
+module ControlWheelManipulator()
+{
+  //Drive wheel assembly
+  rotate(-$ControlWheelAngle, [1, 0, 0])
+    ControlDriveWheelAssembly();
+  //Mount frame
+  translate([-3.5, 0, 0])
+    ControlAssemblyMount();
+}
+
+module ControlAssemblyMount()
+{
+  translate([0.5, 0, -1.75])
+    ControlServoAndGear();
+  translate([0, -1, -1.35])
+    cube([2, 3, 2]);
+}
+
+module ControlServoAndGear()
+{
+  //Rotation drive gear
+  color([0.2, 0.4, 0.4])
+    translate([-1.36 + 3, 0, 0])
+        rotate($ControlWheelAngle + 11, [1, 0, 0])
+          ControlPanelRotationGear($Thickness = 7);
+  //Servo
+  translate([0, 0, 0])
+    rotate(180, [1, 0, 0])
+      rotate(90, [0, 1, 0])
+        color(BlackPaint)
+          Servo();
+}
+
+module Servo()
+{
+  scale(1/25.4)
+    translate([-10, -30, 0])
+      futabas3003();
+}
+
+module ControlDriveWheelAssembly()
+{
+  //Translate so rotation point is correct
+  translate([0, 1.5, 2])
+  {
+    //Drive wheel
+    color([.4, .3, .5])
+      cylinder(d = 4, h = 6, $fn = 20);
+    //Spindle
+    cylinder(d = .25, h = 7, $fn = 20);
+    translate([0, 0, -4.3])
+      Neverest();
+    ControlWheelFrame();
+  }
+}
+
+module ControlWheelFrame()
+{
+  difference()
+  {
+    union()
+    {
+      //Bottom base
+      translate([0.5, 0, -2])
+        cube([3, 6, 2], center = true);
+      //Side suppports
+      translate([-1, 2.5, -1])
+        cube([1.5, .5, 7.5]);
+      translate([-1, -3, -1])
+        cube([1.5, .5, 7.5]);
+      //Top support
+      translate([0, 0, 6.6])
+        cube([2, 6, .25], center = true);
+//      //Sensor arms
+//      rotate(30, [0, 0, 1])
+//        translate([1.5, -0.5, -1.5])
+//          cube([6, 1, .5]);
+//      rotate(-30, [0, 0, 1])
+//        translate([1.5, -0.5, -1.5])
+//          cube([6, 1, .5]);
+    }
+    //Rotation shaft opening
+    translate($ControlWheelOffset)
+      rotate(90, [0, 1, 0])
+        cylinder(d = .25, h = 5, $fn = 20, center = true);
+  }
+  //Rotation drive gear
+  translate([-1.4, 0, 0])
+    translate($ControlWheelOffset)
+      color([0.5, 0.2, 0.7])
+        ControlPanelRotationGear($Thickness = 10);
+  //Rotation shaft
+  color("SILVER")
+  translate($ControlWheelOffset)
+    translate([-0.7, 0, 0])
+      rotate(90, [0, 1, 0])
+        cylinder(d = .24, h = 6, $fn = 20, center = true);
+}
+
+module ControlPanelRotationGear($Thickness = 10)
+{
+  rotate(90, [0, 1, 0])
+    scale(1/25.4)
+      gear (	
+        number_of_teeth=16,
+        circular_pitch=500, 
+        diametral_pitch=false,
+        pressure_angle=18,//28
+        clearance = 0.2,
+        gear_thickness=$Thickness,//5
+        rim_thickness=$Thickness,//Teeth thickness
+        rim_width=5,//Outer rim width
+        hub_thickness=0,//10 Hub length
+        hub_diameter=15,//Hub diameter
+        bore_diameter=15,//Bore diameter
+        circles=0,
+        backlash=0,
+        twist=0,
+        involute_facets=4,
+        flat=false);
+}
+
+module BallIntakeV1()
+{
+  //$FRSTHeight
   //Left, drive plate
   difference()
   {
-    cube([0.125, 8, 16]);
+    cube([0.125, 8, $FRSTHeight + 3]);
     translate([-0.01, 4.1, 0])
       cube([0.225, 4, 4]);
   }
@@ -91,14 +288,19 @@ module BallIntake()
         cube([0.125, 4.5, 2]);
   //Right side
   translate([-7.5, 0, 0])
-    cube([0.125, 6, 12]);
-    translate([-7.5, 6.0, 0])
-      rotate(45, [0, 0, 1])
-        cube([0.125, 3.2, 2]);
+  difference()
+  {
+    cube([0.125, 8, $FRSTHeight]);
+    translate([-0.01, 4.1, 0])
+      cube([0.225, 4, 4]);
+  }
+    translate([-7.5, 4.5, 0])
+      rotate(35, [0, 0, 1])
+        cube([0.125, 4.5, 2]);
   //Back
   translate([-7.4, 0, 0])
-    cube([7.5, 0.125, 16]);
-  //Drive wheel
+    cube([7.5, 0.125, $FRSTHeight + 3]);
+  //Lower drive wheel
   translate([1, 4, 2])
     rotate(90, [1, 0, 0])
     {
@@ -107,8 +309,11 @@ module BallIntake()
         rotate(180, [0, 1, 0])
           Neverest();
     }
+  //Front
+  translate([-7.5, 8, 7])
+    cube([7.5, 0.125, $FRSTHeight - 4]);
   //Kick wheel
-  translate([-2, 4, 18])
+  translate([-2, 4, $FRSTHeight + 5])
     rotate(90, [1, 0, 0])
     {
       Wheel($Diameter = 4, $Thickness = 1);
@@ -116,6 +321,11 @@ module BallIntake()
         rotate(180, [0, 1, 0])
           Neverest();
     }
+  //Intake pusher
+  color("BLUE")
+  translate([-3.75, 9, 5])
+    rotate(90, [0, 1, 0])
+      cylinder(d = 4, h = 5, $fn = 30, center = true);
   //Belt
   translate([-1, 4, 2])
     rotate(-11, [0, 1, 0])

@@ -6,6 +6,13 @@ function Triangle_SSS_A() = acos((pow($A1 , 2) + pow($A2, 2) - pow($O, 2)) / (2 
 
 $HexToRScale        = 1.23607;
 
+module ShowBounds($Bounds = [30, 30, 45], $Color = [0.7, 0.0, 0.8, 0.2])
+{
+	color($Color)
+		translate([-$Bounds[0] / 2, -$Bounds[1] / 2, 0])
+		cube($Bounds);
+}
+
 module RobotBaseSimple($DriveWheelDiameter = 6, $DriveFrameSize      = [28, 28.5, 3], $BumperDepth = 3.5)
 {
     $DriveFrameSizeInner = [$DriveFrameSize[0] - 6, $DriveFrameSize[1] - 6, $DriveFrameSize[2] + 0.05];
@@ -233,7 +240,7 @@ module HexSprocket()
 
 module HexShaft($D = 0.5, $L = 5, $Center = false)
 {
-		cylinder(d = $D * $HexToRScale, h = $L, $fn = 6, center = $Center);
+	cylinder(d = $D * $HexToRScale, h = $L, $fn = 6, center = $Center);
 }
 
 module NeverRestHexShaftMotorCoupler($HexShaftBore = 0.515)
@@ -327,3 +334,16 @@ module Neverest()
 }
 
 
+module slice(r = 10, deg = 30) 
+{
+  degn = (deg % 360 > 0) ? deg % 360 : deg % 360 + 360;
+  difference() 
+  {
+    circle(r);
+    if (degn > 180) intersection_for(a = [0, 180 - degn]) rotate(a) translate([-r, 0, 0]) square(r * 2);
+
+    else union() for(a = [0, 180 - degn]) rotate(a) translate([-r, 0, 0]) square(r * 2);
+
+  }
+
+}

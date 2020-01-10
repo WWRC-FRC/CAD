@@ -23,7 +23,7 @@
 //   bore:          Bore diameter, inches (Chain sizes seem to favor inches), default 5/16
 //   hub_diameter:  Hub diameter, inches, default 0
 //   hub_height:    Hub height TOTAL, default 0.
-//   guideangle:    Guide angle on teeth point to help enter chain cleam
+//   guideangle:    Guide angle on teeth point to help enter chain clean
 //
 // You may also need to tweak some of the fudge factors, depending on your
 // printer, etc.  See the constants below.
