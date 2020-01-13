@@ -6,8 +6,9 @@ use <MCAD/servos.scad>
 $Action = 6; //[1:Trajectory sim, 2:Launcher V1, 3:Launcher V2, 4:Full bot V1, 5: Ball intake, 6:ControlWheelManipulator]
 
 /* [Field elements] */
-$ShowControlPanel = true;//Show control panel wheel
-
+$ShowControlPanel = false;//Show control panel wheel
+$ShowLoadingBay = true;//Show loading bay heights
+$ShowGoals = false;//Show goal heights
 
 /* [Bounding boxes] */
 $ShowStartBound = false;//Show robot starting constraints
@@ -39,7 +40,7 @@ $LaunchCompression = 1;//
 $ShooterV2GuideOpening = 8;//Width of the guide channel
 
 /* [Intake options] */
-$BallIntakeStyle = "BallIntakeV1"; //[BallIntakeV1:"Front roller, side transport"]
+$BallIntakeStyle = "BallIntakeV2"; //[BallIntakeV1:"Front roller, side transport", BallIntakeV2:"Front scoop"]
 $FRSTHeight = 12;//FRST intake channel height
 
 /* [Control wheel options] */
@@ -76,22 +77,69 @@ Transparent = [1, 1, 1, 0.2];
 
 
 DoAction();
+ShowFieldElements();
+ShowBoundingBoxes();
 
-if ($ShowStartBound)//Show robot starting constraints
+module ShowFieldElements()
 {
-  ShowBounds($Bounds = $MaxRobotBounds);
+  if ($ShowControlPanel)
+  {
+    translate([0, 23, 0])
+      ControlPanel();
+  }  
+  if ($ShowLoadingBay)
+  {
+    translate([0, 20, 0])
+      color(Oak)
+        LoadingBay();
+  }
+  if ($ShowGoals)
+  {
+    translate([0, 20, 0])
+      color(Pine)
+        PortGoals();
+  }
 }
 
-if ($ShowTrenchBound)//Show bounds for trench run
+module PortGoals()
 {
-  ShowBounds($Bounds = $TrenchRunBounds);
+  difference()
+  {
+    translate([-20, 0 ,0])
+      cube([40, 0.125, 48]);
+    //Lower portal goal
+    translate([-17, -.1, 18])
+      cube([34, 1, 8]);
+  }
 }
 
-if ($ShowControlPanel)
+module LoadingBay()
 {
-  translate([0, 23, 0])
-    ControlPanel();
-}  
+  difference()
+  {
+    translate([-15, 0 ,0])
+      cube([30, 0.125, 48]);
+    //Upper loading bay
+    translate([-12, -.1, 24])
+      cube([24, 1, 8]);
+    //Lower loading bay
+    translate([-4, -.1, 3])
+      cube([8, 1, 8]);
+  }
+}
+
+module ShowBoundingBoxes()
+{
+  if ($ShowStartBound)//Show robot starting constraints
+  {
+    ShowBounds($Bounds = $MaxRobotBounds);
+  }
+
+  if ($ShowTrenchBound)//Show bounds for trench run
+  {
+    ShowBounds($Bounds = $TrenchRunBounds);
+  }
+}
 
 module DoAction()
 {
@@ -107,7 +155,7 @@ module DoAction()
   else if ($Action == 4)
     FullBotV1();
   else if ($Action == 5)
-    BallIntake();
+    Intake();
   else if ($Action == 6)
     ControlWheelManipulator();
 }
@@ -130,7 +178,7 @@ module FullBotV1()
   $FeedFrom = 1;//[0:Top, 1:Bottom]
   $MotorPlacement = 1;//[0:Outer, 1:Inner]
   
-  RobotBaseSimple();
+  RobotBaseSimple($BumperOffset = 1, $OpenFront = false);
   translate([-7.5, -8, 22])
     rotate(180, [0, 0, 1])
       ShooterV2Model();
@@ -148,6 +196,45 @@ module Intake()
       BallIntakeV1();
     translate([0, 10, 3.5])
       Ball();
+  }
+  else if ($BallIntakeStyle == "BallIntakeV2")
+  {
+//    RobotBaseSimple($BumperOffset = 1, $OpenFront = false);
+    rotate(180, [0, 0, 1])
+      translate([0, -14 -11, 7])
+        BallIntakeScoop();
+    translate([0, 21.5, 3.5])
+      Ball();
+  }
+}
+
+module BallIntakeScoop()
+{
+  translate([0, 4.4, 3.5])
+    Ball();
+  translate([0, 4.4, 3.5 + 7])
+    Ball();
+  //Leading edge scooper
+  color(Brass)
+    translate([0, 1, 0])
+      rotate(90, [0, 1, 0])
+        cylinder(d = 2, h = 24, $fn = 30, center = true);
+  color([0.6, 0.25, 0.11, 0.5])
+  {
+    //Front panel
+    translate([-13, 0, 2])
+      cube([26, 0.125, 12]);
+    //Back panel
+    translate([-13, 8, 0])
+      cube([26, 0.125, 12]);
+    //Side panels
+    translate([13, 0, 0])
+      cube([0.125, 8, 14]);
+    translate([-13, 0, 0])
+      cube([0.125, 8, 14]);
+    //Back bumper panel
+    translate([-13,7, -5.5])
+      cube([26, 0.125, 5.5]);
   }
 }
 

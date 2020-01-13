@@ -13,7 +13,7 @@ module ShowBounds($Bounds = [30, 30, 45], $Color = [0.7, 0.0, 0.8, 0.2])
 		cube($Bounds);
 }
 
-module RobotBaseSimple($DriveWheelDiameter = 6, $DriveFrameSize      = [28, 28.5, 3], $BumperDepth = 3.5)
+module RobotBaseSimple($DriveWheelDiameter = 6, $DriveFrameSize      = [28, 28.5, 3], $BumperDepth = 3.5, $BumperOffset = 2, $OpenFront = true)
 {
     $DriveFrameSizeInner = [$DriveFrameSize[0] - 6, $DriveFrameSize[1] - 6, $DriveFrameSize[2] + 0.05];
     $BumperSize          = [$DriveFrameSize[0] + ($BumperDepth * 2), $DriveFrameSize[1] + ($BumperDepth * 2), 5];
@@ -30,8 +30,8 @@ module RobotBaseSimple($DriveWheelDiameter = 6, $DriveFrameSize      = [28, 28.5
 				cube($DriveFrameSize, center = true);
 				cube($DriveFrameSizeInner, center = true);
 			}
-            translate([0, 0, 2])
- 			color([0.3, 0.1, 0.5, 0.5])
+            translate([0, 0, $BumperOffset])
+		color([0.3, 0.1, 0.5, 0.5])
             difference()
             {
 				cube($BumperSize, center = true);
@@ -42,8 +42,9 @@ module RobotBaseSimple($DriveWheelDiameter = 6, $DriveFrameSize      = [28, 28.5
 			translate([-13, 0, 0])
 				WheelSet();
 		}
-		translate([0, 10, 0])
-			cube([$FrontGap, 20, 30], center = true);
+		if ($OpenFront)
+			translate([0, 10, 0])
+				cube([$FrontGap, 20, 30], center = true);
 	}
 }
 
