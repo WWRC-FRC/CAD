@@ -3,7 +3,7 @@ use <MCAD/involute_gears.scad>
 use <MCAD/servos.scad>
 
 /* [Action] */
-$Action = 6; //[1:Trajectory sim, 2:Launcher V1, 3:Launcher V2, 4:Full bot V1, 5: Ball intake, 6:ControlWheelManipulator]
+$Action = 7; //[1:Trajectory sim, 2:Launcher V1, 3:Launcher V2, 4:Full bot V1, 5: Ball intake, 6:ControlWheelManipulator, 7:Hook lifter]
 
 /* [Field elements] */
 $ShowControlPanel = false;//Show control panel wheel
@@ -13,6 +13,7 @@ $ShowGoals = false;//Show goal heights
 /* [Bounding boxes] */
 $ShowStartBound = false;//Show robot starting constraints
 $ShowTrenchBound = false;//Show bounds for trench run
+$ShowMaxBound = false;//Show bounds for max reach
 
 /* [Trajectory sim] */
 //Initial velocity exiting parallel to shooter (m/s)
@@ -28,9 +29,9 @@ $StartLineOffset = 50;
 
 /* [Shooter] */
 $FlyWheelDiameter = 4;
-$Style = 0;//[0:Square, 1:Round]
+$HopperStyle = 3;//[0: None, 1:Square, 2:Round, 3: Flat]
 $FeedFrom = 1;//[0:Top, 1:Bottom]
-$MotorPlacement = 0;//[0:Outer, 1:Inner]
+$MotorPlacement = 1;//[0:Outer, 1:Inner]
 
 //Shooter parameters
 $ShooterFeederSpacing = 8;
@@ -42,6 +43,13 @@ $ShooterV2GuideOpening = 8;//Width of the guide channel
 /* [Intake options] */
 $BallIntakeStyle = "BallIntakeV2"; //[BallIntakeV1:"Front roller, side transport", BallIntakeV2:"Front scoop"]
 $FRSTHeight = 12;//FRST intake channel height
+$FSHopperAngle = 0;//Front scoop hopper rotation angle
+$FSHopperCenterX = 4;//Front scoop hopper rotation axis-X. (0, 0) = bottom-back of hopper
+$FSHopperCenterY = 5;//Front scoop hopper rotation axis-Y
+$FSIntakeAngle   = 0;//Front scoop intake angle
+$FSIntakeXLength = 10;//Front scoop intake length
+$FSIntakeYLength = -2;//Front scoop intake height
+$BackBumperSize  = 3;//Bumper plate
 
 /* [Control wheel options] */
 $ControlWheelAngle = 0;
@@ -55,12 +63,16 @@ $mtoinch = 1/$inchtom;
 $mtofeet = $mtoinch / 12;
 $Explode = 1.0;
 
+$ScoopWidth = 23;
+
+
 $ControlWheelOffset = [0, -1.5, -2];
 
 $ShooterV2FeederSpacing = $BallDiameter + $FlyWheelDiameter - $LaunchCompression;//Spacing between drive wheel set centers
 $ShooterFlywheelColor = [0.7, 0.1, 0.2];
 
-$MaxRobotBounds = [30, 30, 45];
+$StartRobotBounds = [30, 30, 45];
+$MaxRobotBounds = [$StartRobotBounds[0] + 24, $StartRobotBounds[1] + 24, $StartRobotBounds[2]];
 $TrenchRunBounds = [30, 30, 27];
 
 Oak = [0.65, 0.5, 0.4];
@@ -89,13 +101,13 @@ module ShowFieldElements()
   }  
   if ($ShowLoadingBay)
   {
-    translate([0, 20, 0])
+    translate([0, 27, 0])
       color(Oak)
         LoadingBay();
   }
   if ($ShowGoals)
   {
-    translate([0, 20, 0])
+    translate([0, 27, 0])
       color(Pine)
         PortGoals();
   }
@@ -132,12 +144,17 @@ module ShowBoundingBoxes()
 {
   if ($ShowStartBound)//Show robot starting constraints
   {
-    ShowBounds($Bounds = $MaxRobotBounds);
+    ShowBounds($Bounds = $StartRobotBounds);
   }
 
   if ($ShowTrenchBound)//Show bounds for trench run
   {
     ShowBounds($Bounds = $TrenchRunBounds);
+  }
+
+  if ($ShowMaxBound)//Show bounds for trench run
+  {
+    ShowBounds($Bounds = $MaxRobotBounds);
   }
 }
 
@@ -158,6 +175,22 @@ module DoAction()
     Intake();
   else if ($Action == 6)
     ControlWheelManipulator();
+  else if ($Action == 7)
+    HookLifter();
+}
+
+module HookLifter()
+{
+  $HookLifterPositionAngle = 10;
+  $HookLifterSegmentLength = 20;
+  rotate(90 - $HookLifterPositionAngle, [1, 0, 0])
+    Tube($L = $HookLifterSegmentLength, $W = 1, $H = 1);
+  translate([0,-($HookLifterSegmentLength * cos($HookLifterPositionAngle)), 1 + ($HookLifterSegmentLength * sin($HookLifterPositionAngle))])
+    rotate(-90 + $HookLifterPositionAngle, [1, 0, 0])
+      Tube($L = $HookLifterSegmentLength, $W = 1, $H = 1);
+  translate([0, 0, 2 + (2 * $HookLifterSegmentLength * sin($HookLifterPositionAngle))])
+    rotate(90 - $HookLifterPositionAngle, [1, 0, 0])
+      Tube($L = $HookLifterSegmentLength, $W = 1, $H = 1);
 }
 
 module ControlPanel()
@@ -173,17 +206,12 @@ module ControlPanel()
 
 module FullBotV1()
 {
-  $FlyWheelDiameter = 4;
-  $Style = 1;//[0:Square, 1:Round]
-  $FeedFrom = 1;//[0:Top, 1:Bottom]
-  $MotorPlacement = 1;//[0:Outer, 1:Inner]
-  
   RobotBaseSimple($BumperOffset = 1, $OpenFront = false);
   translate([-7.5, -8, 22])
     rotate(180, [0, 0, 1])
       ShooterV2Model();
   Intake();
-  translate([1.5, 5, 25])
+  translate([1.5, 0.5, 25])
     rotate(90, [0, 0, 1])
       ControlWheelManipulator();
 }
@@ -200,12 +228,56 @@ module Intake()
   else if ($BallIntakeStyle == "BallIntakeV2")
   {
 //    RobotBaseSimple($BumperOffset = 1, $OpenFront = false);
-    rotate(180, [0, 0, 1])
-      translate([0, -14 -11, 7])
-        BallIntakeScoop();
-    translate([0, 21.5, 3.5])
+    translate([0, 21, 3.5])
       Ball();
+    translate([0, 17 - $FSIntakeXLength + $FSHopperCenterX, $FSHopperCenterY + 6.5 - $FSIntakeYLength])
+      BallIntakeScoopMechanism();
   }
+}
+
+module BallIntakeScoopMechanism()
+{
+  rotate($FSIntakeAngle, [1, 0, 0])
+  {
+    //Intake scoop actuator
+    BallIntakeScoopActuator();
+    translate([0, $FSIntakeXLength, $FSIntakeYLength])
+    {
+      //Intake scoop
+      {
+        //Show rotation axis
+        color("BLACK")
+          rotate(90, [0, 1, 0])
+            cylinder(d = .2, h = 30, $fn = 10, center = true);
+        rotate($FSHopperAngle - $FSIntakeAngle, [1, 0, 0])
+          translate([0, -$FSHopperCenterX, -$FSHopperCenterY])
+            BallIntakeScoop();
+      }
+    }
+  }
+}
+
+module BallIntakeScoopActuatorSide()
+{
+  rotate(-90, [1, 0, 0])
+  {
+    Tube($L = $FSIntakeXLength, $W = 1, $H = 1);
+    translate([0, 0, $FSIntakeXLength])
+      rotate(90, [1, 0, 0])
+        if ($FSIntakeYLength > 0)
+          Tube($L = $FSIntakeYLength, $W = 1, $H = 1);
+        else
+          translate([0, 0, $FSIntakeYLength])
+            Tube($L = -$FSIntakeYLength, $W = 1, $H = 1);
+  }
+}
+
+module BallIntakeScoopActuator()
+{
+  translate([($ScoopWidth / 2) + 0.6, 0, 0])
+    BallIntakeScoopActuatorSide();
+  translate([-($ScoopWidth / 2) - 0.6, 0, 0])
+    BallIntakeScoopActuatorSide();
 }
 
 module BallIntakeScoop()
@@ -214,27 +286,33 @@ module BallIntakeScoop()
     Ball();
   translate([0, 4.4, 3.5 + 7])
     Ball();
-  //Leading edge scooper
+  translate([7.5, 4.4, 3.5])
+    Ball();
+  translate([7.5, 4.4, 3.5 + 7])
+    Ball();
+  translate([-7.5, 4.4, 3.5])
+    Ball();
+  //Leading edge scooper roller
   color(Brass)
-    translate([0, 1, 0])
+    translate([0, 7, 0])
       rotate(90, [0, 1, 0])
-        cylinder(d = 2, h = 24, $fn = 30, center = true);
+        cylinder(d = 2, h = $ScoopWidth - 1, $fn = 30, center = true);
   color([0.6, 0.25, 0.11, 0.5])
   {
     //Front panel
-    translate([-13, 0, 2])
-      cube([26, 0.125, 12]);
+    translate([-($ScoopWidth / 2), 8, 2])
+      cube([$ScoopWidth, 0.125, 11]);
     //Back panel
-    translate([-13, 8, 0])
-      cube([26, 0.125, 12]);
+    translate([-($ScoopWidth / 2), 0, 0])
+      cube([$ScoopWidth, 0.125, 13]);
     //Side panels
-    translate([13, 0, 0])
-      cube([0.125, 8, 14]);
-    translate([-13, 0, 0])
-      cube([0.125, 8, 14]);
+    translate([($ScoopWidth / 2), 0, 0])
+      cube([0.125, 8, 13]);
+    translate([-($ScoopWidth / 2), 0, 0])
+      cube([0.125, 8, 13]);
     //Back bumper panel
-    translate([-13,7, -5.5])
-      cube([26, 0.125, 5.5]);
+    translate([-($ScoopWidth / 2),1, -$BackBumperSize])
+      cube([$ScoopWidth, 0.125, $BackBumperSize]);
   }
 }
 
@@ -440,9 +518,9 @@ module ShooterV2Feeder()
     cylinder(d = 0.5, h = 7, $fn = 20);
   
   //Feed channel
-  difference()
+  if ($HopperStyle == 1)
   {
-    if ($Style == 0)
+    difference()
     {
       translate([9, -4.3, 6.7])
         rotate(-20, [0, 1, 0])
@@ -453,24 +531,36 @@ module ShooterV2Feeder()
             translate([0, 0, 0.125])
               cube([22.1, 7.5, 6], center = true);
           }
-    }
-    else
+      translate([-8, -10, 0])
+        cube([8, 10, 10]);
+      translate([19, -10, 5])
+        cube([8, 10, 10]);
+      }
+    FeederBallSet();
+  }
+  else if ($HopperStyle == 2)
+  {
+    difference()
     {
       translate([-1.2, -4.7, 3.7])
-      rotate(-20 + 90, [0, 1, 0])
-      difference()
-      {
-        cylinder(d = 8.125, h = 22, $fn = 20);
-        translate([-10, -5, 0])
-          cube([10, 10, 30]);
-        translate([0, 0, -0.5])
-          cylinder(d = 8, h = 23, $fn = 20);
+        rotate(-20 + 90, [0, 1, 0])
+          difference()
+          {
+            cylinder(d = 8.125, h = 22, $fn = 20);
+            translate([-10, -5, 0])
+              cube([10, 10, 30]);
+            translate([0, 0, -0.5])
+              cylinder(d = 8, h = 23, $fn = 20);
+          }
+        translate([-8, -10, 0])
+          cube([8, 10, 10]);
+        translate([19, -10, 5])
+          cube([8, 10, 10]);
       }
-    }
-    translate([-8, -10, 0])
-      cube([8, 10, 10]);
-    translate([19, -10, 5])
-      cube([8, 10, 10]);
+    FeederBallSet();
+  }
+  else if ($HopperStyle == 3)
+  {
   }
 }
 
@@ -659,7 +749,6 @@ module ShooterV2Model()
   translate([-13, -3.8, -17.3])
   {
     ShooterV2Feeder();
-    FeederBallSet();
   }
 }
 
