@@ -63,7 +63,11 @@ $mtoinch = 1/$inchtom;
 $mtofeet = $mtoinch / 12;
 $Explode = 1.0;
 
-$ScoopWidth = 23;
+$ScoopWidth = 24;
+$FulcrumLength = 6;
+
+$FSAxisSpacing = sqrt(($FSIntakeXLength * $FSIntakeXLength) + ($FSIntakeYLength * $FSIntakeYLength));
+$FSSupportAngle = Triangle_SSS_A($A1 = $FSAxisSpacing, $A2 = $FSIntakeXLength, $O = $FSIntakeYLength);
 
 
 $ControlWheelOffset = [0, -1.5, -2];
@@ -241,6 +245,10 @@ module BallIntakeScoopMechanism()
   {
     //Intake scoop actuator
     BallIntakeScoopActuator();
+    //Show rotation axis
+    color("BLACK")
+      rotate(90, [0, 1, 0])
+        cylinder(d = .2, h = 30, $fn = 10, center = true);
     translate([0, $FSIntakeXLength, $FSIntakeYLength])
     {
       //Intake scoop
@@ -255,28 +263,73 @@ module BallIntakeScoopMechanism()
       }
     }
   }
+    //Scoop rotation motor/sprocket set
+    //Alignment sprocket
+    translate([($ScoopWidth / 2) + 0.4, 0, 0])
+      rotate(-90, [0, 1, 0])
+        cylinder(d = 3, h = .25, $fn = 20);
+    //Alignment drive chain
+    translate([($ScoopWidth / 2) + 0.17, 0, 0])
+      color("DARKGRAY")
+        rotate($FSIntakeAngle - $FSSupportAngle, [1, 0, 0])
+        {
+          translate([0, 0, 1.5])
+              cube([.2, $FSAxisSpacing, .2]);
+          translate([0, 0, -1.5 - 0.2])
+              cube([.2, $FSAxisSpacing, .2]);
+        }
+    //Rotation sprocket
+    translate([($ScoopWidth / 2) + 0.4 - 0.5, 0, 0])
+      rotate(-90, [0, 1, 0])
+        cylinder(d = 3, h = .25, $fn = 20);
+    //Rotation Motor
+    translate([($ScoopWidth / 2)-5.2, 0, -3])
+      rotate(90, [0, 1, 0])
+        Neverest();
+    //Rotation motor sprocket
+    translate([($ScoopWidth / 2) + 0.4 - 0.5, 0, -3])
+      rotate(-90, [0, 1, 0])
+        cylinder(d = 1.5, h = .25, $fn = 20);
+    //Rotation motor drive chain
+    color("DARKGRAY")
+    {
+      translate([($ScoopWidth / 2) - 0.3, 1.2, -1.7])
+        rotate(75, [1, 0, 0])
+          cube([.2, 3.2, .2], center = true);
+      mirror([0, 1, 0])
+        translate([($ScoopWidth / 2) - 0.3, 1.2, -1.7])
+          rotate(75, [1, 0, 0])
+            cube([.2, 3.2, .2], center = true);
+    }
 }
 
 module BallIntakeScoopActuatorSide()
 {
+  rotate(-90 - $FSSupportAngle, [1, 0, 0])
+  {
+    translate([0, 0, -$FulcrumLength])
+    Tube($L = $FSAxisSpacing + $FulcrumLength + 0.5, $W = 1, $T = 1);
+  }
+  /*
   rotate(-90, [1, 0, 0])
   {
-    Tube($L = $FSIntakeXLength, $W = 1, $H = 1);
+    Tube($L = $FSIntakeXLength, $W = 1, $T = 1);
     translate([0, 0, $FSIntakeXLength])
       rotate(90, [1, 0, 0])
         if ($FSIntakeYLength > 0)
-          Tube($L = $FSIntakeYLength, $W = 1, $H = 1);
+          Tube($L = $FSIntakeYLength, $W = 1, $T = 1);
         else
           translate([0, 0, $FSIntakeYLength])
-            Tube($L = -$FSIntakeYLength, $W = 1, $H = 1);
+            Tube($L = -$FSIntakeYLength, $W = 1, $T = 1);
   }
+  */
 }
 
 module BallIntakeScoopActuator()
 {
-  translate([($ScoopWidth / 2) + 0.6, 0, 0])
+  translate([($ScoopWidth / 2) + 1.5, 0, 0])
     BallIntakeScoopActuatorSide();
-  translate([-($ScoopWidth / 2) - 0.6, 0, 0])
+  translate([-($ScoopWidth / 2) - 1.0, 0, 0])
     BallIntakeScoopActuatorSide();
 }
 
@@ -286,33 +339,102 @@ module BallIntakeScoop()
     Ball();
   translate([0, 4.4, 3.5 + 7])
     Ball();
-  translate([7.5, 4.4, 3.5])
+  translate([7.2, 4.4, 3.5])
     Ball();
-  translate([7.5, 4.4, 3.5 + 7])
+  translate([7.2, 4.4, 3.5 + 7])
     Ball();
-  translate([-7.5, 4.4, 3.5])
+  translate([-7.2, 4.4, 3.5])
     Ball();
   //Leading edge scooper roller
   color(Brass)
     translate([0, 7, 0])
       rotate(90, [0, 1, 0])
-        cylinder(d = 2, h = $ScoopWidth - 1, $fn = 30, center = true);
+        cylinder(d = 2, h = $ScoopWidth - 3, $fn = 30, center = true);
+  //Intake motor and drive
+  //Chain sprockets
+  translate([-($ScoopWidth / 2) - 0.1, 7, 0])
+    rotate(-90, [0, 1, 0])
+      cylinder(d = 1.5, h = .25, $fn = 20);
+  translate([-($ScoopWidth / 2) - 0.1, -2, 1])
+    rotate(-90, [0, 1, 0])
+      cylinder(d = 1.5, h = .25, $fn = 20);
+  //Motor
+  translate([-($ScoopWidth / 2) + 5, -2, 1])
+    rotate(-90, [0, 1, 0])
+      Neverest();
+  //Drive chain
+  translate([-($ScoopWidth / 2) - 0.1, 7, 0])
+    color("DARKGRAY")
+      rotate(173.8, [1, 0, 0])
+      {
+        translate([-.12, 0, 1.5 / 2])
+            cube([.2, 9.3, .2]);
+        translate([-.12, 0, -1.9 / 2])
+            cube([.2, 9.3, .2]);
+      }
+
+  //Hopper rotation mech
+  //Chain sprockets
+  translate([($ScoopWidth / 2) + 0.4, $FSHopperCenterX, $FSHopperCenterY])
+    rotate(-90, [0, 1, 0])
+      cylinder(d = 3, h = .25, $fn = 20);
+
+  //"box" support frame
+  //Left
+  translate([-($ScoopWidth / 2) - 0.0, 0, 0])
+    ScoopFrameSide();
+  //Right
+  mirror([1, 0, 0])
+    translate([-($ScoopWidth / 2), 0, 0])
+      ScoopFrameSide();
+  //Lower back
+  translate([-($ScoopWidth / 2) + 1.125, 0, 0.5])
+    rotate(90, [0, 1, 0])
+      Tube($L = $ScoopWidth - 2 - 0.25, $W = 1, $T = 2);
+  //Upper back
+  translate([-($ScoopWidth / 2) + 1.125, -0.5, 11.5])
+    rotate(90, [0, 1, 0])
+      Tube($L = $ScoopWidth - 2 - 0.25, $W = 1, $T = 1);
+  
+  //Hopper box
   color([0.6, 0.25, 0.11, 0.5])
   {
     //Front panel
     translate([-($ScoopWidth / 2), 8, 2])
       cube([$ScoopWidth, 0.125, 11]);
     //Back panel
-    translate([-($ScoopWidth / 2), 0, 0])
-      cube([$ScoopWidth, 0.125, 13]);
+    translate([-($ScoopWidth / 2), 0, 1])
+      cube([$ScoopWidth, 0.125, 11]);
     //Side panels
-    translate([($ScoopWidth / 2), 0, 0])
-      cube([0.125, 8, 13]);
-    translate([-($ScoopWidth / 2), 0, 0])
-      cube([0.125, 8, 13]);
+    translate([($ScoopWidth / 2), -1, 0])
+      cube([0.125, 9, 13]);
+    translate([-($ScoopWidth / 2), -1, 0])
+      cube([0.125, 9, 13]);
     //Back bumper panel
-    translate([-($ScoopWidth / 2),1, -$BackBumperSize])
-      cube([$ScoopWidth, 0.125, $BackBumperSize]);
+    translate([-($ScoopWidth / 2) + 1 + 0.125,1, -$BackBumperSize])
+      cube([$ScoopWidth - 2 - 0.25, 0.125, $BackBumperSize + 1]);
+  }
+
+}
+
+module ScoopFrameSide()
+{
+  
+  {
+    //Front vertical
+    translate([0.5 + 0.125, -0.5 + 8, 2])
+      Tube($L = 10, $W = 1, $H = 1);
+    //Back vertical
+    translate([0.5 + 0.125, -0.5, 0])
+      Tube($L = 12, $W = 1, $H = 1);
+    //Top horizontal
+    translate([0.5 + 0.125, -1, 12.5])
+      rotate(-90, [1, 0, 0])
+        Tube($L = 9, $W = 1, $H = 1);
+    //Bottom horizontal
+    translate([0.5 + 0.125, -0, 1])
+      rotate(-90, [1, 0, 0])
+        Tube($L = 8, $W = 1, $T = 2);
   }
 }
 
