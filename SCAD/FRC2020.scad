@@ -29,6 +29,7 @@ $StartLineOffset = 50;
 
 /* [Shooter] */
 $FlyWheelDiameter = 4;
+$ShooterStyle = 1;//[0: None, 1:Double parallel, 2:Single round]
 $HopperStyle = 3;//[0: None, 1:Square, 2:Round, 3: Flat]
 $FeedFrom = 1;//[0:Top, 1:Bottom]
 $MotorPlacement = 1;//[0:Outer, 1:Inner]
@@ -41,7 +42,10 @@ $LaunchCompression = 1;//
 $ShooterV2GuideOpening = 8;//Width of the guide channel
 
 /* [Intake options] */
-$BallIntakeStyle = "BallIntakeV2"; //[BallIntakeV1:"Front roller, side transport", BallIntakeV2:"Front scoop"]
+$BallIntakeStyle = "BallIntakeV2"; //[BallIntakeV1:"Front roller, side transport", BallIntakeV2:"Front scoop", BallIntakeV3:"Front, inset conveyor"]
+$ScoopRotationDrive = 2;//[0: None, 1:Balanced, 2:Dynamic]
+// slider widget for Intake channel count
+$FSIntakeChannels = 1;//[1:3]
 $FRSTHeight = 12;//FRST intake channel height
 $FSHopperAngle = 0;//Front scoop hopper rotation angle
 $FSHopperCenterX = 4;//Front scoop hopper rotation axis-X. (0, 0) = bottom-back of hopper
@@ -63,8 +67,7 @@ $mtoinch = 1/$inchtom;
 $mtofeet = $mtoinch / 12;
 $Explode = 1.0;
 
-$ScoopWidth = 24;
-$FulcrumLength = 6;
+$FulcrumLength = 4;
 
 $FSAxisSpacing = sqrt(($FSIntakeXLength * $FSIntakeXLength) + ($FSIntakeYLength * $FSIntakeYLength));
 $FSSupportAngle = Triangle_SSS_A($A1 = $FSAxisSpacing, $A2 = $FSIntakeXLength, $O = $FSIntakeYLength);
@@ -91,6 +94,8 @@ Aluminum = [0.77, 0.77, 0.8];
 Brass = [0.88, 0.78, 0.5];
 Transparent = [1, 1, 1, 0.2];
 
+//Set variables based on settings now
+$ScoopWidth = (7 * $FSIntakeChannels) + 3;
 
 DoAction();
 ShowFieldElements();
@@ -210,14 +215,20 @@ module ControlPanel()
 
 module FullBotV1()
 {
-  RobotBaseSimple($BumperOffset = 1, $OpenFront = false);
-  translate([-7.5, -8, 22])
-    rotate(180, [0, 0, 1])
-      ShooterV2Model();
+  RobotBaseSimple($BumperOffset = 1, $OpenFront = true);
+  Shooter();
   Intake();
   translate([1.5, 0.5, 25])
     rotate(90, [0, 0, 1])
       ControlWheelManipulator();
+}
+
+module Shooter()
+{
+  if ($ShooterStyle == 1)
+    translate([-7.5, -8, 22])
+      rotate(180, [0, 0, 1])
+        ShooterV2Model();
 }
 
 module Intake()
@@ -231,12 +242,22 @@ module Intake()
   }
   else if ($BallIntakeStyle == "BallIntakeV2")
   {
-//    RobotBaseSimple($BumperOffset = 1, $OpenFront = false);
     translate([0, 21, 3.5])
       Ball();
     translate([0, 17 - $FSIntakeXLength + $FSHopperCenterX, $FSHopperCenterY + 6.5 - $FSIntakeYLength])
       BallIntakeScoopMechanism();
   }
+  else if ($BallIntakeStyle == "BallIntakeV3")
+  {
+    BallIntakeInsetConveyor();
+  }
+  
+}
+
+module BallIntakeInsetConveyor()
+{
+  translate([0, 5.5, 6])
+    BallIntakeScoop();
 }
 
 module BallIntakeScoopMechanism()
@@ -252,24 +273,75 @@ module BallIntakeScoopMechanism()
     translate([0, $FSIntakeXLength, $FSIntakeYLength])
     {
       //Intake scoop
+      //Show rotation axis
+      color("BLACK")
+        rotate(90, [0, 1, 0])
+          cylinder(d = .2, h = 30, $fn = 10, center = true);
+      rotate($FSHopperAngle - $FSIntakeAngle, [1, 0, 0])
+        translate([0, -$FSHopperCenterX, -$FSHopperCenterY])
+          BallIntakeScoop();
+    }
+  }
+  if ($ScoopRotationDrive == 1)
+      ScoopDriveBalancing();
+  else if ($ScoopRotationDrive == 2)
+    {
+      ScoopDriveDynamic();
+    }
+}
+
+module ScoopDriveDynamic()//Orientation of the hopper requires software tracking
+{
+  //Hopper rotation mech
+  //Chain sprockets
+  translate([-($ScoopWidth / 2) - 0.1 - .5, 0, 0])
+  {
+    rotate($FSIntakeAngle - $FSSupportAngle, [1, 0, 0])
+    {
+      translate([5.2, -2, 1.5])
+        rotate(-90, [0, 1, 0])
+          Neverest();
+      translate([0, -2, 1.5])
+        rotate(-90, [0, 1, 0])
+          cylinder(d = 1.5, h = .25, $fn = 20);
+
+        translate([0, $FSAxisSpacing, 0])
+          rotate(-90, [0, 1, 0])
+            cylinder(d = 3, h = .25, $fn = 20);
+
+
+      //Rotation motor drive chain
+      color("DARKGRAY")
       {
-        //Show rotation axis
-        color("BLACK")
-          rotate(90, [0, 1, 0])
-            cylinder(d = .2, h = 30, $fn = 10, center = true);
-        rotate($FSHopperAngle - $FSIntakeAngle, [1, 0, 0])
-          translate([0, -$FSHopperCenterX, -$FSHopperCenterY])
-            BallIntakeScoop();
+        translate([-0.23, -2, 2.2])
+          rotate(-3.5, [1, 0, 0])
+            cube([.2, 12.5, .2]);
+          translate([-0.23, -2, .55])
+            rotate(-10.5, [1, 0, 0])
+              cube([.2, 12.5, .2]);
       }
     }
   }
+}
+
+module ScoopDriveBalancing()//Auto orientation of the hopper
+{
+  translate([-($ScoopWidth / 2) - .45, 0, 0])
+  {
+    //Hopper rotation mech
+    //Chain sprockets
+    translate([-0.1, 0, 0])
+      rotate($FSIntakeAngle-$FSSupportAngle, [1, 0, 0])
+        translate([0, $FSAxisSpacing, 0])
+          rotate(-90, [0, 1, 0])
+            cylinder(d = 3, h = .25, $fn = 20);
     //Scoop rotation motor/sprocket set
     //Alignment sprocket
-    translate([($ScoopWidth / 2) + 0.4, 0, 0])
+    translate([-0.1, 0, 0])
       rotate(-90, [0, 1, 0])
         cylinder(d = 3, h = .25, $fn = 20);
     //Alignment drive chain
-    translate([($ScoopWidth / 2) + 0.17, 0, 0])
+    translate([-0.32, 0, 0])
       color("DARKGRAY")
         rotate($FSIntakeAngle - $FSSupportAngle, [1, 0, 0])
         {
@@ -279,28 +351,29 @@ module BallIntakeScoopMechanism()
               cube([.2, $FSAxisSpacing, .2]);
         }
     //Rotation sprocket
-    translate([($ScoopWidth / 2) + 0.4 - 0.5, 0, 0])
+    translate([0.3, 0, 0])
       rotate(-90, [0, 1, 0])
         cylinder(d = 3, h = .25, $fn = 20);
     //Rotation Motor
-    translate([($ScoopWidth / 2)-5.2, 0, -3])
-      rotate(90, [0, 1, 0])
+    translate([5.2, 0, -3])
+      rotate(-90, [0, 1, 0])
         Neverest();
     //Rotation motor sprocket
-    translate([($ScoopWidth / 2) + 0.4 - 0.5, 0, -3])
+    translate([0.3, 0, -3])
       rotate(-90, [0, 1, 0])
         cylinder(d = 1.5, h = .25, $fn = 20);
     //Rotation motor drive chain
     color("DARKGRAY")
     {
-      translate([($ScoopWidth / 2) - 0.3, 1.2, -1.7])
+      translate([ 0.18, 1.2, -1.7])
         rotate(75, [1, 0, 0])
           cube([.2, 3.2, .2], center = true);
       mirror([0, 1, 0])
-        translate([($ScoopWidth / 2) - 0.3, 1.2, -1.7])
+        translate([0.18, 1.2, -1.7])
           rotate(75, [1, 0, 0])
             cube([.2, 3.2, .2], center = true);
     }
+  }
 }
 
 module BallIntakeScoopActuatorSide()
@@ -308,43 +381,33 @@ module BallIntakeScoopActuatorSide()
   rotate(-90 - $FSSupportAngle, [1, 0, 0])
   {
     translate([0, 0, -$FulcrumLength])
-    Tube($L = $FSAxisSpacing + $FulcrumLength + 0.5, $W = 1, $T = 1);
+      Tube($L = $FSAxisSpacing + $FulcrumLength + 0.5, $W = 1, $T = 1);
   }
-  /*
-  rotate(-90, [1, 0, 0])
-  {
-    Tube($L = $FSIntakeXLength, $W = 1, $T = 1);
-    translate([0, 0, $FSIntakeXLength])
-      rotate(90, [1, 0, 0])
-        if ($FSIntakeYLength > 0)
-          Tube($L = $FSIntakeYLength, $W = 1, $T = 1);
-        else
-          translate([0, 0, $FSIntakeYLength])
-            Tube($L = -$FSIntakeYLength, $W = 1, $T = 1);
-  }
-  */
 }
 
 module BallIntakeScoopActuator()
 {
-  translate([($ScoopWidth / 2) + 1.5, 0, 0])
+  translate([($ScoopWidth / 2) + 0.75, 0, 0])
     BallIntakeScoopActuatorSide();
-  translate([-($ScoopWidth / 2) - 1.0, 0, 0])
+  translate([-($ScoopWidth / 2) - 1.5, 0, 0])
     BallIntakeScoopActuatorSide();
 }
 
-module BallIntakeScoop()
+module BallIntakeScoop($ShowWideBalls = true)
 {
   translate([0, 4.4, 3.5])
     Ball();
   translate([0, 4.4, 3.5 + 7])
     Ball();
-  translate([7.2, 4.4, 3.5])
-    Ball();
-  translate([7.2, 4.4, 3.5 + 7])
-    Ball();
-  translate([-7.2, 4.4, 3.5])
-    Ball();
+  if ($FSIntakeChannels == 3)
+  {
+    translate([7.2, 4.4, 3.5])
+      Ball();
+    translate([7.2, 4.4, 3.5 + 7])
+      Ball();
+    translate([-7.2, 4.4, 3.5])
+      Ball();
+  }
   //Leading edge scooper roller
   color(Brass)
     translate([0, 7, 0])
@@ -355,29 +418,28 @@ module BallIntakeScoop()
   translate([-($ScoopWidth / 2) - 0.1, 7, 0])
     rotate(-90, [0, 1, 0])
       cylinder(d = 1.5, h = .25, $fn = 20);
-  translate([-($ScoopWidth / 2) - 0.1, -2, 1])
-    rotate(-90, [0, 1, 0])
-      cylinder(d = 1.5, h = .25, $fn = 20);
-  //Motor
-  translate([-($ScoopWidth / 2) + 5, -2, 1])
-    rotate(-90, [0, 1, 0])
-      Neverest();
-  //Drive chain
-  translate([-($ScoopWidth / 2) - 0.1, 7, 0])
-    color("DARKGRAY")
-      rotate(173.8, [1, 0, 0])
-      {
-        translate([-.12, 0, 1.5 / 2])
-            cube([.2, 9.3, .2]);
-        translate([-.12, 0, -1.9 / 2])
-            cube([.2, 9.3, .2]);
+  translate([-($ScoopWidth / 2) - 0.1, 0, 0])
+  {
+    translate([0, -2, 2])
+    {
+      rotate(-90, [0, 1, 0])
+        cylinder(d = 1.5, h = .25, $fn = 20);
+      //Motor
+      translate([5, 0, 0])
+        rotate(-90, [0, 1, 0])
+          Neverest();
+    }
+    //Drive chain
+    translate([0, 7, 0])
+      color("DARKGRAY")
+        rotate(167.4, [1, 0, 0])
+        {
+          translate([-.12, 0, 1.5 / 2])
+              cube([.2, 9.3, .2]);
+          translate([-.12, 0, -1.9 / 2])
+              cube([.2, 9.3, .2]);
+        }
       }
-
-  //Hopper rotation mech
-  //Chain sprockets
-  translate([($ScoopWidth / 2) + 0.4, $FSHopperCenterX, $FSHopperCenterY])
-    rotate(-90, [0, 1, 0])
-      cylinder(d = 3, h = .25, $fn = 20);
 
   //"box" support frame
   //Left
@@ -414,7 +476,6 @@ module BallIntakeScoop()
     translate([-($ScoopWidth / 2) + 1 + 0.125,1, -$BackBumperSize])
       cube([$ScoopWidth - 2 - 0.25, 0.125, $BackBumperSize + 1]);
   }
-
 }
 
 module ScoopFrameSide()
