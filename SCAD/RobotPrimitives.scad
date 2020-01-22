@@ -348,3 +348,11 @@ module slice(r = 10, deg = 30)
   }
 
 }
+
+module BearingReceptical($Type="608", $DOversize = 0, $HOversize = 0)
+{
+	if ($Type=="608")
+	{
+		cylinder(d = 22 + $DOversize, h = 7 + $HOversize, $fn = 40);
+	}
+}
