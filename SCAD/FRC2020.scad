@@ -3,11 +3,11 @@ use <MCAD/involute_gears.scad>
 use <MCAD/servos.scad>
 
 /* [Action] */
-$Action = 0; //[1:Trajectory sim, 2:Launcher V1, 3:Launcher V2, 4:Full bot V1, 5: Ball intake, 6:ControlWheelManipulator, 7:Hook lifter, 8:Control Wheel Manipulator]
+$Action = 9; //[1:Trajectory sim, 2:Launcher V1, 3:Launcher V2, 4:Full bot V1, 5: Ball intake, 6:ControlWheelManipulator, 7:Hook lifter, 8:Control Wheel Manipulator, 9:Shooter angler]
 
 /* [Field elements] */
 $ShowControlPanel = false;//Show control panel wheel
-$ShowLoadingBay = true;//Show loading bay heights
+$ShowLoadingBay = false;//Show loading bay heights
 $ShowGoals = false;//Show goal heights
 
 /* [Bounding boxes] */
@@ -199,6 +199,129 @@ module DoAction()
     HookLifter();
   else if ($Action == 8)
     ControlWheelManipulator();
+  else if ($Action == 9)
+    ShooterAngler();
+}
+
+module ShooterAngler()
+{
+  $PivotBoltD = 5/16;
+  $PivotBoltHeadD = 0.5;
+  $PivotBoltInset = .2;
+  $LeadscrewTNutD = .6;
+  $LeadscrewTNutOuterD = 1;
+  $NutAccessHeight = .7;
+  $FrameWidth = 2;
+  $FrameDepth = 1;
+  $FrameHeight = 1.2;
+  $SupportHeight = .75;
+  $SupportSideWidth = 0.5;
+  $Clearance = 0.05;
+  $SupportDepth = 2.5;
+  $FrameClearanceDepth = $FrameDepth + .4;
+  $ShooterAngleMotorD = 1.5;
+  $LowerSupportWidth = 2.5;
+  $LowerSupportHeight = 0.75;
+  $LowerSupportDepth = 2.8;
+  $VerticalMountSpacing = 0.85;
+  
+  translate([$Clearance + $SupportSideWidth, 0, 3])
+    ShooterAnglerUpperPivot();
+  translate([0, 0, 3])
+    ShooterAnglerPivotSupport();
+  ShooterAnglerLowerSupport();
+  translate([-$SupportSideWidth - $Clearance, 2, 0])
+    ShooterAnglerPivotSupport($FrameWidth = $LowerSupportWidth, $VerticalMountSpacing);
+}
+
+module ShooterAnglerLowerSupport()
+{
+  difference()
+  {
+    //Main frame
+    cube([$LowerSupportWidth, $LowerSupportDepth, $LowerSupportHeight]);
+    //Motor opening
+    translate([$LowerSupportWidth / 2, 1.2, 0])
+      cylinder(d = $ShooterAngleMotorD, h = 4, $fn = 20, center = true);
+    //Motor clamp gap
+    translate([$LowerSupportWidth / 2, 0, 0.5])
+      cube([.2, 1, 2], center = true);
+    //Motor clamp bolt
+    translate([-0.1, 0.25, $LowerSupportHeight / 2])
+      rotate(90, [0, 1, 0])
+        cylinder(d = 3/16, h = 3, $fn = 20);
+    //Pivot hole
+    translate([-0.1, 2.45, $LowerSupportHeight / 2])
+      rotate(90, [0, 1, 0])
+        cylinder(d = 3/8, h = 3, $fn = 20);
+  }
+}
+
+module ShooterAnglerPivotSupport()
+{
+  $SupportWidth = $FrameWidth + $SupportSideWidth + $SupportSideWidth + $Clearance + $Clearance;
+
+  difference()
+  {
+    //Main frame
+    cube([$SupportWidth, $SupportDepth, $SupportHeight]);
+    //Opening for pivot mech
+    translate([$SupportSideWidth, -0.01, -0.01])
+      cube([$FrameWidth + ($Clearance * 2), $FrameClearanceDepth + 0.01, $SupportHeight + 0.02]);
+    //Pivot shaft opening
+    translate([(($FrameWidth + $LeadscrewTNutOuterD) / 2) - 0.01, $FrameDepth / 2, 0.3])
+      rotate(90, [0, 1, 0])
+        cylinder(d = $PivotBoltD, h = $SupportWidth + 1, $fn = 20, center = true);
+    //Vertical mount holes
+    translate([$SupportWidth / 2, 2, 0])
+      cylinder(d = 3/16, h = 4, $fn = 20, center = true);
+    translate([($SupportWidth / 2) - $VerticalMountSpacing, 2, 0])
+      cylinder(d = 3/16, h = 4, $fn = 20, center = true);
+    translate([($SupportWidth / 2) + $VerticalMountSpacing, 2, 0])
+      cylinder(d = 3/16, h = 4, $fn = 20, center = true);
+  }
+  //Horizontal mount block
+  translate([0, 1.3, 0])
+    difference()
+    {
+      cube([$SupportSideWidth, 1.2, $SupportHeight + 0.6]);
+      translate([0, 0.25, 1])
+        rotate(90, [0, 1, 0])
+          cylinder(d = 3/16, h = 2, $fn = 20, center = true);
+      translate([0, 0.95, 1])
+        rotate(90, [0, 1, 0])
+          cylinder(d = 3/16, h = 2, $fn = 20, center = true);
+    }
+}
+
+module ShooterAnglerUpperPivot()
+{
+  difference()
+  {
+    //Base frame
+    cube([$FrameWidth, $FrameDepth, $FrameHeight]);
+    //Nut channel access
+    translate([($FrameWidth - $LeadscrewTNutOuterD) / 2, -0.1, -0.01])
+      cube([$LeadscrewTNutOuterD, $FrameDepth + 0.2, $NutAccessHeight]);
+    //TNut opening
+    translate([$FrameWidth / 2, $FrameDepth / 2, 0])
+      cylinder(d = $LeadscrewTNutD, h = 3, $fn = 20);
+    //Pivot shaft bolt captures
+    translate([(($FrameWidth - $LeadscrewTNutOuterD) / 2) + 0.01, $FrameDepth / 2, 0.3])
+      rotate(-90, [0, 1, 0])
+      {
+        rotate(30, [0, 0, 1])//Rotate so flat is aligned with bottom
+          cylinder(d = $PivotBoltHeadD, h = $PivotBoltInset, $fn = 6);
+        cylinder(d = $PivotBoltD, h = 2, $fn = 20);
+      }
+    translate([(($FrameWidth + $LeadscrewTNutOuterD) / 2) - 0.01, $FrameDepth / 2, 0.3])
+      rotate(90, [0, 1, 0])
+      {
+        rotate(30, [0, 0, 1])//Rotate so flat is aligned with bottom
+          cylinder(d = $PivotBoltHeadD, h = $PivotBoltInset, $fn = 6);
+        cylinder(d = $PivotBoltD, h = 2, $fn = 20);
+      }
+  }
 }
 
 module HookLifter()
