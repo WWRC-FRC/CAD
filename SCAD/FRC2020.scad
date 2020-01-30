@@ -3,7 +3,7 @@ use <MCAD/involute_gears.scad>
 use <MCAD/servos.scad>
 
 /* [Action] */
-$Action = 0; //[0: Nothing, 1:Trajectory sim, 2:Launcher V1, 3:Launcher V2, 4:Full bot V1, 5: Ball intake, 6:ControlWheelManipulator, 7:Hook lifter, 8:Control Wheel Manipulator, 9:Shooter angler]
+$Action = 0; //[1:Trajectory sim, 2:Launcher V1, 3:Launcher V2, 4:Full bot V1, 5: Ball intake, 6:ControlWheelManipulator, 7:Hook lifter, 8:Control Wheel Manipulator, 9:Shooter angler]
 
 /* [Field elements] */
 $ShowControlPanel = false;//Show control panel wheel
@@ -73,6 +73,8 @@ $FSAxisSpacing = sqrt(($FSIntakeXLength * $FSIntakeXLength) + ($FSIntakeYLength 
 $FSSupportAngle = Triangle_SSS_A($A1 = $FSAxisSpacing, $A2 = $FSIntakeXLength, $O = $FSIntakeYLength);
 
 
+$ControlWheelOffset = [0, -1.5, -2];
+
 $ShooterV2FeederSpacing = $BallDiameter + $FlyWheelDiameter - $LaunchCompression;//Spacing between drive wheel set centers
 $ShooterFlywheelColor = [0.7, 0.1, 0.2];
 
@@ -84,9 +86,6 @@ $TrenchRunBounds = [30, 30, 27];
 $CWShaftDiameter = 8/25.4;//8mm
 $CWShaftClearance = 2/25.4;//2mm
 $CWMotorDiameter = 1.5;
-$ControlWheelContactorHeight = 6;
-
-$ControlWheelOffset = [0, -0.28, -2];
 
 //Misc colors
 Oak = [0.65, 0.5, 0.4];
@@ -131,8 +130,8 @@ ShowBoundingBoxes();
 //Printable elements
 //  ControlDriveMount();
 //  ControlWheelFrame();
-//  ControlPanelServoGear($Teeth = 12);
-//  ShooterAnglerPrint();
+//  ControlPanelServoGear();
+ShooterAnglerPrint();
 
 module ShowFieldElements()
 {
@@ -665,22 +664,21 @@ module ScoopFrameSide()
   }
 }
 
-ControlWheelManipulator();
 module ControlWheelManipulator()
 {
   //Drive wheel assembly
   rotate(-$ControlWheelAngle, [1, 0, 0])
     ControlDriveWheelAssembly();
   //Mount frame
-  translate([-3.8, 1.22, 0])
+  translate([-3.5, 0, 0])
     ControlDriveMountAssembly();
 }
 
 module ControlDriveMountAssembly()
 {
-  translate([0.63, 0, -1.75])
+  translate([0.5, 0, -1.75])
     ControlServoAndGear();
-#  ControlDriveMount();
+  ControlDriveMount();
 }
 
 module ControlDriveMount()
@@ -736,11 +734,11 @@ module ControlPanelServoGear()
 {
   difference()
   {
-    ControlPanelRotationGear($Thickness = 7, $Bore = 10, $Teeth = 12);
-//    //Servo coupler inset
-//    translate([0.2, 0, 0])
-//      rotate(90, [0, 1, 0])
-//        cylinder(d = 1, h = .2, $fn = 30);
+    ControlPanelRotationGear($Thickness = 7, $Bore = 10);
+    //Servo coupler inset
+    translate([0.2, 0, 0])
+      rotate(90, [0, 1, 0])
+        cylinder(d = 1, h = .2, $fn = 30);
   }
 }
 
@@ -748,7 +746,7 @@ module ControlServoAndGear()
 {
   //Rotation drive gear
   color([0.2, 0.4, 0.4])
-    translate([-1.54 + 3, 0, 0])
+    translate([-1.36 + 3, 0, 0])
         rotate($ControlWheelAngle + 11, [1, 0, 0])
           ControlPanelServoGear();
   //Servo
@@ -765,6 +763,7 @@ module Servo()
     translate([-10, -30, 0])
       futabas3003();
 }
+
 module ControlDriveWheelAssembly()
 {
   //Translate so rotation point is correct
@@ -772,10 +771,10 @@ module ControlDriveWheelAssembly()
   {
     //Drive wheel
     color([.4, .3, .5])
-      cylinder(d = 4, h = $ControlWheelContactorHeight, $fn = 20);
+      cylinder(d = 4, h = 6, $fn = 20);
     //Spindle
     cylinder(d = .25, h = 7, $fn = 20);
-    translate([0, 0, -4.7])
+    translate([0, 0, -4.3])
       Neverest();
     ControlWheelFrame();
     
@@ -790,44 +789,53 @@ module ControlDriveWheelAssembly()
 }
 
 module ControlWheelFrame()
-{ 
+{
+  
   difference()
   {
     union()
     {
       //Bottom base
-      translate([-0.1, 0, -2])
-        cube([2.5, 6, 2], center = true);
+      translate([0.5, 0, -2])
+        cube([3, 6, 2], center = true);
       //Side suppports
-      translate([-0.75, 2.5, -1])
+      translate([-1, 2.5, -1])
         cube([1.5, .5, 7.5]);
-      translate([-0.75, -3, -1])
+      translate([-1, -3, -1])
         cube([1.5, .5, 7.5]);
       //Top support
-      translate([0, 0, 6.4])
+      translate([-0.25, 0, 6.4])
         cube([1.5, 6, .4], center = true);
       //Rotation drive gear
-      translate([-1.74, 0, 0])
+      translate([-1.4, 0, 0])
         translate($ControlWheelOffset)
           color([0.5, 0.2, 0.7])
             ControlPanelRotationGear($Thickness = 10);
     }
     //Motor opening
-    translate([0, -0.28, 0])//Neverest shaft is 0.28" off center
-      cylinder(d = $CWMotorDiameter, h = 7, $fn = 30, center = true);
+    cylinder(d = $CWMotorDiameter, h = 7, $fn = 30, center = true);
+    //Rotation shaft opening
+    translate($ControlWheelOffset)
+      rotate(90, [0, 1, 0])
+        cylinder(d = $CWShaftDiameter + $CWShaftClearance, h = 5, $fn = 20, center = true);
+    //Rotation shaft bearings
     translate($ControlWheelOffset)
     {
-      //Rotation bolt shaft opening to allow bolt to pass through to roration
-      rotate(90, [0, 1, 0])
-        cylinder(d = 0.6, h = 2, $fn = 20);
-      //Rotation bolt shaft
-      translate([-2.5, 0, 0])
+      translate([2.01, 0, 0])
+        rotate(-90, [0, 1, 0])
+          scale(1/25.4)
+            BearingReceptical($Type="608",  $DOversize = .5);
+      translate([-1.41, 0, 0])
         rotate(90, [0, 1, 0])
-          cylinder(d = $CWShaftDiameter + $CWShaftClearance, h = 2, $fn = 20);
-      //Rotation bolt head
-      translate([-0.73 - .3, 0, 0])
-        rotate(90, [0, 1, 0])
-          cylinder(d = $CWShaftDiameter + $CWShaftClearance + .2, h = .5, $fn = 6);
+          scale(1/25.4)
+            BearingReceptical($Type="608",  $DOversize = .5);
+    }
+    //Spindle bearing
+    translate([0, 0, 6.29])
+    {
+      scale(1/25.4)
+        BearingReceptical($Type="608",  $DOversize = .5, $HOversize = 1);
+      cylinder(d = $CWShaftDiameter + $CWShaftClearance, h = 1, $fn = 20, center = true);
     }
     //Motor clamp mechanism
     translate([0, 0, -3.5])
@@ -842,26 +850,19 @@ module ControlWheelFrame()
       rotate(90, [0, 1, 0])
         cylinder(d = 0.3, h = 5, $fn = 20, center = true);
       //Bolt head inset
-      translate([1.01, 0, 0])
+      translate([-.9, 0, 0])
         rotate(90, [0, 1, 0])
           cylinder(d = 0.6, h = .3, $fn = 6, center = true);
-    }
-    //Spindle bearing
-    translate([0, 0, 6.29])
-    {
-      scale(1/25.4)
-        BearingReceptical($Type="608",  $DOversize = .5, $HOversize = 1);
-      cylinder(d = $CWShaftDiameter + $CWShaftClearance, h = 1, $fn = 20, center = true);
     }
   }
 }
 
-module ControlPanelRotationGear($Thickness = 10, $Bore = 0, $Teeth = 16)
+module ControlPanelRotationGear($Thickness = 10, $Bore = 0)
 {
   rotate(90, [0, 1, 0])
     scale(1/25.4)
       gear (	
-        number_of_teeth=$Teeth,
+        number_of_teeth=16,
         circular_pitch=500, 
         diametral_pitch=false,
         pressure_angle=18,//28

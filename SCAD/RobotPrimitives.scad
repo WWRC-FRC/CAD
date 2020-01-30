@@ -328,9 +328,8 @@ module MiniCIM()
 
 module Neverest()
 {
-  translate([0, -0.28, 0])
-    color([0.6, 0.7, 0.75])
-      cylinder(d = 1.5, h = 2.24 + 0.709 + 1.024, $fn = 30);
+  color([0.6, 0.7, 0.75])
+    cylinder(d = 1.5, h = 2.24 + 0.709 + 1.024, $fn = 30);
   color("SILVER")
     cylinder(d = 0.217, h = 5.3, $fn = 30);
 }
