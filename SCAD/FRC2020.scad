@@ -793,11 +793,11 @@ module ControlPanelServoGear()
 {
   difference()
   {
-    ControlPanelRotationGear($Thickness = 7, $Bore = 10, $Teeth = 12);
+    ControlPanelRotationGear($Thickness = 7, $Bore = 9.2, $Teeth = 12);
     //Servo coupler inset
     translate([0.195, 0, 0])
       rotate(90, [0, 1, 0])
-        cylinder(d = 1, h = .2, $fn = 30);
+        cylinder(d = 23/25.4, h = .2, $fn = 30);
   }
 }
 
