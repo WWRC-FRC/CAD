@@ -75,9 +75,6 @@ $FulcrumLength = 4;
 $FSAxisSpacing = sqrt(($FSIntakeXLength * $FSIntakeXLength) + ($FSIntakeYLength * $FSIntakeYLength));
 $FSSupportAngle = Triangle_SSS_A($A1 = $FSAxisSpacing, $A2 = $FSIntakeXLength, $O = $FSIntakeYLength);
 
-
-$ControlWheelOffset = [0, -1.5, -2];
-
 $ShooterV2FeederSpacing = $BallDiameter + $FlyWheelDiameter - $LaunchCompression;//Spacing between drive wheel set centers
 $ShooterFlywheelColor = [0.7, 0.1, 0.2];
 
@@ -86,6 +83,7 @@ $MaxRobotBounds = [$StartRobotBounds[0] + 24, $StartRobotBounds[1] + 24, $StartR
 $TrenchRunBounds = [30, 30, 27];
 
 //Color wheel manipulator
+$ControlWheelOffset = [0, -0.3, -2];
 $CWShaftDiameter = 8/25.4;//8mm
 $CWShaftClearance = 2/25.4;//2mm
 $CWMotorDiameter = 1.5;
@@ -866,15 +864,19 @@ module ControlWheelFrame()
     {
       //Bottom base
       translate([-0.1, 0, -2])
-        cube([2.5, 6, 2], center = true);
+        cube([2.5, 4.5, 2], center = true);
+/*
       //Side suppports
-      translate([-0.75, 2.5, -1])
-        cube([1.5, .5, 7.5]);
-      translate([-0.75, -3, -1])
-        cube([1.5, .5, 7.5]);
+      translate([-0.75, 2.25, -3])
+        cube([1.5, .5, 9.5]);
+      translate([-0.75, -2.75, -3])
+        cube([1.5, .5, 9.5]);
+*/
+/*
       //Top support
       translate([0, 0, 6.4])
-        cube([1.5, 6, .4], center = true);
+        cube([1.5, 5.5, .4], center = true);
+*/      
       //Rotation drive gear
       translate([-1.74, 0, 0])
         translate($ControlWheelOffset)
@@ -888,7 +890,7 @@ module ControlWheelFrame()
     {
       //Rotation bolt shaft opening to allow bolt to pass through to roration
       rotate(90, [0, 1, 0])
-        cylinder(d = 0.6, h = 2, $fn = 20);
+        cylinder(d = 0.7, h = 2, $fn = 20);
       //Rotation bolt shaft
       translate([-2.5, 0, 0])
         rotate(90, [0, 1, 0])
@@ -896,7 +898,7 @@ module ControlWheelFrame()
       //Rotation bolt head
       translate([-0.73 - .3, 0, 0])
         rotate(90, [0, 1, 0])
-          cylinder(d = $CWShaftDiameter + $CWShaftClearance + .2, h = .5, $fn = 6);
+          cylinder(d = .6, h = .5, $fn = 6);
     }
     //Motor clamp mechanism
     translate([0, 0, -3.5])
@@ -905,16 +907,9 @@ module ControlWheelFrame()
         translate([-1.4, 1.5, 0])
       cube([1.5, .1, 3]);
     }
-    translate([0, 1, -2])
-    {
-      //Bolt shaft opening
-      rotate(90, [0, 1, 0])
-        cylinder(d = 0.3, h = 5, $fn = 20, center = true);
-      //Bolt head inset
-      translate([1.01, 0, 0])
-        rotate(90, [0, 1, 0])
-          cylinder(d = 0.6, h = .3, $fn = 6, center = true);
-    }
+    translate([1.151, 1, -2])
+      //Motor bolt shaft opening
+      CaptiveBoltOpening($Type = "M5", $Angle = -90);
     //Spindle bearing
     translate([0, 0, 6.29])
     {
