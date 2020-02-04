@@ -6,7 +6,7 @@ use <MCAD/servos.scad>
 $Action = 10; //[0: Nothing, 1:Trajectory sim, 2:Launcher V1, 3:Launcher V2, 4:Full bot V1, 5: Ball intake, 6:ControlWheelManipulator, 7:Hook lifter, 9:Shooter angler, 10:Print]
 
 /* [Printables] */
-$ToPrint = 1;//[1:ControlDriveMount,2:ControlWheelFrame, 3:ControlPanelServoGear, 4:ShooterAnglerPrint]
+$ToPrint = 5;//[1:ControlDriveMount,2:ControlWheelFrame, 3:ControlPanelServoGear, 4:ShooterAnglerPrint, 5:ControlWheelHubs]
 
 /* [Field elements] */
 $ShowControlPanel = false;//Show control panel wheel
@@ -144,6 +144,43 @@ module PrintPart()
     ControlPanelServoGear($Teeth = 12);
   else if ($ToPrint == 4)
     ShooterAnglerPrint();
+  else if ($ToPrint == 5)
+    ControlWheelHubs();
+}
+
+module ControlWheelHubs()
+{
+  $fn = 60;
+  //Lower motor hub
+  difference()
+  {
+    translate([0, 0, 0.1])
+    {
+      //Main shaft
+      cylinder(d1 = 15.0, d2 = 14.8, h = 25);
+      //Lower motor strengthner
+      cylinder(d = 20, h = 10);
+    }
+    difference()
+    {
+      //Motor shaft opening
+      cylinder(d = 6.1, h = 20);
+      //Motor shaft D section
+      translate([-5, 2.7, -1])
+        cube([10, 5, 22]);
+    }
+    translate([0, -.6 + 2.4, 7])
+      rotate(30, [0, 1, 0])
+        CaptiveBoltOpening($Type = "M2.5", $Units = 1, $Angle = 90, $Orientation = [-1, 0, 0]);
+  }
+  //Upper bearing hub
+  translate([30, 0, 0])
+  {
+    //Main shaft
+    cylinder(d2 = 14.95, d1 = 14.8, h = 15);
+    //Bearing shaft
+    cylinder(d = 8, h = 20);
+  }
 }
 
 module ShowFieldElements()
@@ -396,7 +433,7 @@ module FullBotV1()
   RobotBaseSimple($BumperOffset = 1, $OpenFront = true);
   Shooter();
   Intake();
-  translate([1.5, 0.5, 25])
+  translate([1.5, 0.5, 24.5])
     rotate(90, [0, 0, 1])
       ControlWheelManipulator();
 }

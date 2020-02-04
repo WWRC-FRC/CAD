@@ -371,7 +371,7 @@ module Bolt()
 module CaptiveBoltOpening($Type = "M5", $ShaftLength = 100, $Angle = 0, $Orientation = [0,1, 0], $Units = 1/25.4)
 {
   if ($Type == "M5")
-  {
     Bolt($Shaft = 5.3, $Head = 10, $HeadDepth = 4);
-  }
+  else if ($Type == "M2.5")
+    Bolt($Shaft = 2.55, $Head = 5.7, $HeadDepth = 3.2);
 }
